@@ -14,13 +14,6 @@
 #define  DIVADDR		0x3F00	// time constant address
 #define  REGBIOSFLAG	0x3F01 	// start bare BIOS flag address
 #define  FREQADRS		0x3F02	// frequency divisor address
-#define  COLDLOADDEBUG 0
-
-#ifdef __SEPARATE_INST_DATA__
-#if __SEPARATE_INST_DATA__
-#error "Turn off separate I&D space."
-#endif
-#endif
 
 #rcodorg rootcod2 0x0 0x0 0x6000 apply
 
@@ -238,25 +231,3 @@ timeout::
 	jr timeout
 coldloadend::
 #endasm
-
-
-#if COLDLOADDEBUG
-#asm
-ledchg::
-	push hl
-	push af
-	ld 	a, 0x84
-	ioi   ld (SPCR), a
-	ld    hl,WDTCR
-	ioi ld    (hl),5Ah			; hit watchdog
-	pop af
-	ioi   ld (PADR), a
-	pop hl
-	ret
-justloop::
-	ld    a,5Ah
-	ioi ld    (WDTCR),a			; hit watchdog
-	jr justloop
-#endasm
-#endif
-
