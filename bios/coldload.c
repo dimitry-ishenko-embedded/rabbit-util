@@ -12,8 +12,8 @@
 
 #rcodorg rootcod2 0x0 0x0 0x6000 apply
 
-void _get_byte();
-void _send_byte();
+void get_byte();
+void send_byte();
 void timeout();
 
 #asm
@@ -90,25 +90,25 @@ delay_loop:
     ld a, 0x40
     ioi ld (PCFR), a
 
-    call _get_byte
+    call get_byte
     ld e, a                         ; pilot BIOS's begin physical address LSB
 
-    call _get_byte
+    call get_byte
     ld d, a                         ; pilot BIOS's begin physical address LSmidB
 
-    call _get_byte
+    call get_byte
     ld c, a                         ; pilot BIOS's begin physical address MSmidB
 
-    call _get_byte
+    call get_byte
     ld b, a                         ; pilot BIOS's begin physical address MSB
 
-    call _get_byte
+    call get_byte
     ld l, a                         ; pilot BIOS's size LSB
 
-    call _get_byte
+    call get_byte
     ld h, a                         ; pilot BIOS's size MSB
 
-    call _get_byte
+    call get_byte
     altd ld a, a                    ; store received checksum in A'
 
     ld a, e                         ; initialize and calculate local checksum
@@ -117,7 +117,7 @@ delay_loop:
     add a, b
     add a, l
     add a, h
-    call _send_byte                 ; send ack echoing the locally calculated checksum
+    call send_byte                  ; send ack echoing the locally calculated checksum
 
     exx
     ld b, a
@@ -151,10 +151,10 @@ delay_loop:
     ld iy, hl                       ; save pilot's logical begin in IY for copy-to-RAM index
     ld ix, hl                       ; and in IX for the jump to the pilot BIOS
 
-_wait_for_CC:
-    call _get_byte
+wait_for_cc:
+    call get_byte
     cp 0xcc                         ; initial pilot BIOS code (flag) byte?
-    jr nz, _wait_for_CC
+    jr nz, wait_for_cc
     xor a
     ld (iy), a                      ; replace the 0xcc marker with 0x00 (nop)
     inc iy                          ; increment the copy-to-RAM index
@@ -162,8 +162,8 @@ _wait_for_CC:
     ld bc, 0xcccc                   ; update the (initially 0x0000) 8-bit Fletcher
                                     ; checksum value with the 0xcc just received
 
-_load_pilot_loop:
-    call _get_byte
+load_pilot_loop:
+    call get_byte
     ld (iy), a
 
 ; Use 8-bit Fletcher checksum algorithm. See RFC1145 for more info.
@@ -179,12 +179,12 @@ _load_pilot_loop:
     bool hl
     ld l, h                         ; zero hl
     or hl, de                       ; check remaining size of pilot
-    jr nz, _load_pilot_loop         ; repeat until size bytes are received
+    jr nz, load_pilot_loop          ; repeat until size bytes are received
 
     ld a, c                         ; send LSB of pilot BIOS's Fletcher checksum
-    call _send_byte
+    call send_byte
     ld a, b                         ; send MSB of pilot BIOS's Fletcher checksum
-    call _send_byte
+    call send_byte
 
 ;   ioi ld (WDTTR), a               ; reenable the watchdog timer
 
@@ -192,7 +192,7 @@ _load_pilot_loop:
 #endasm
 
 #asm
-_get_byte::
+get_byte::
 pollrxbuf:
     ioi ld a, (SASR)                ; check byte receive status
     bit 7, a
@@ -203,7 +203,7 @@ pollrxbuf:
 
 #asm
 ; Must not destroy register A!! Destroys HL'.
-_send_byte::
+send_byte::
     exx
 polltxbuf:
     ld hl, SASR
