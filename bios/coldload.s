@@ -1,29 +1,34 @@
-/*
-   Copyright (c) 2020 Digi International Inc.
+; Copyright (c) 2020 Digi International Inc.
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-*/
+DIVADDR         = 0x3f00            ; time constant address
+REGBIOSFLAG     = 0x3f01            ; start bare BIOS flag address
+FREQADRS        = 0x3f02            ; frequency divisor address
 
-#define  DIVADDR        0x3f00      // time constant address
-#define  REGBIOSFLAG    0x3f01      // start bare BIOS flag address
-#define  FREQADRS       0x3f02      // frequency divisor address
+DATASEG         = 0x0012
+PCFR            = 0x0055
+RTC0R           = 0x0002
+SACR            = 0x00c4
+SADR            = 0x00c0
+SASR            = 0x00c3
+SEGSIZE         = 0x0013
+TACSR           = 0x00a0
+TAT4R           = 0x00a9
+WDTCR           = 0x0008
+WDTTR           = 0x0009
 
-#rcodorg rootcod2 0x0 0x0 0x6000 apply
+.area _CODE
 
-void get_byte();
-void send_byte();
-void timeout();
-
-#asm
 premain::
 main::
-    ld sp, coldloadend + 0x200      ; set up stack in low root segment
+    ld sp, #(coldloadend + 0x200)   ; set up stack in low root segment
 
 ; Start of crystal frequency detection.
-    ld bc, 0x0000                   ; our counter
-    ld de, 0x07ff                   ; mask for RTC bits
+    ld bc, #0x0000                  ; our counter
+    ld de, #0x07ff                  ; mask for RTC bits
 
 ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ; ! WARNING: Time critical code for crystal frequency       !
@@ -32,22 +37,28 @@ main::
 ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 wait_for_zero:
-    ioi ld (RTC0R), a               ; fill RTC registers
-    ioi ld hl, (RTC0R)              ; get lowest two RTC regs
+    ioi
+    ld (RTC0R), a                   ; fill RTC registers
+    ioi
+    ld hl, (RTC0R)                  ; get lowest two RTC regs
     and hl, de                      ; mask off bits
     jr nz, wait_for_zero            ; wait until bits 0-9 are zero
 
 timing_loop:
     inc bc                          ; increment counter
     push bc                         ; save counter
-    ld b, 0x98                      ; empirical loop value (timed for 2 wait states)
-    ld hl, WDTCR
+    ld b, #0x98                     ; empirical loop value (timed for 2 wait states)
+    ld hl, #WDTCR
+
 delay_loop:
-    ioi ld (hl), 0x5a               ; hit watchdog
+    ioi
+    ld (hl), #0x5a                  ; hit watchdog
     djnz delay_loop
     pop bc                          ; restore counter
-    ioi ld (RTC0R), a               ; fill RTC registers
-    ioi ld hl, (RTC0R)              ; get lowest two RTC regs
+    ioi
+    ld (RTC0R), a                   ; fill RTC registers
+    ioi
+    ld hl, (RTC0R)                  ; get lowest two RTC regs
     bit 2, h                        ; test bit 10
     jr z, timing_loop               ; repeat until bit set
 
@@ -58,7 +69,7 @@ delay_loop:
 
     ld h, b
     ld l, c
-    ld de, 0x0008
+    ld de, #0x0008
     add hl, de                      ; add 8 (equiv. to rounding up later)
 
     rr hl
@@ -68,7 +79,8 @@ delay_loop:
     ld a, l                         ; this is our divider!
 
     dec a
-    ioi ld (TAT4R), a               ; set timer A4 running at 57600 baud
+    ioi
+    ld (TAT4R), a                   ; set timer A4 running at 57600 baud
     inc a
 
     ld b, a
@@ -79,16 +91,21 @@ delay_loop:
     dec a
 
     ld (DIVADDR), a                 ; save 19200 baud scaling
-    ld a, 0x01
-    ioi ld (TACSR), a               ; enable timer A with cpuclk/2
+    ld a, #0x01
+    ioi
+    ld (TACSR), a                   ; enable timer A with cpuclk/2
     xor a
-    ioi ld (SACR), a                ; set serial port A async, 8 bit, parallel port C input
-    ld a, 0x51
-    ioi ld (WDTTR), a               ; disable the watchdog timer
-    ld a, 0x54
-    ioi ld (WDTTR), a               ; disable the watchdog timer
-    ld a, 0x40
-    ioi ld (PCFR), a
+    ioi
+    ld (SACR), a                    ; set serial port A async, 8 bit, parallel port C input
+    ld a, #0x51
+    ioi
+    ld (WDTTR), a                   ; disable the watchdog timer
+    ld a, #0x54
+    ioi
+    ld (WDTTR), a                   ; disable the watchdog timer
+    ld a, #0x40
+    ioi
+    ld (PCFR), a
 
     call get_byte
     ld e, a                         ; pilot BIOS's begin physical address LSB
@@ -109,7 +126,8 @@ delay_loop:
     ld h, a                         ; pilot BIOS's size MSB
 
     call get_byte
-    altd ld a, a                    ; store received checksum in A'
+    altd
+    ld a, a                         ; store received checksum in A'
 
     ld a, e                         ; initialize and calculate local checksum
     add a, d
@@ -134,14 +152,16 @@ delay_loop:
     rr hl
     rr hl
     ld a, l                         ; copy pilot BIOS's physical address bits 19:12 into A
-    sub 0x06                        ; calculate DATASEG value for pilot at 0x6000 logical
-    ioi ld (DATASEG), a
-    ld a, 0xe6                      ; no stack seg (0xe000), put data seg boundary at 0x6000
-    ioi ld (SEGSIZE), a
+    sub #0x06                       ; calculate DATASEG value for pilot at 0x6000 logical
+    ioi
+    ld (DATASEG), a
+    ld a, #0xe6                     ; no stack seg (0xe000), put data seg boundary at 0x6000
+    ioi
+    ld (SEGSIZE), a
 
     ld a, d                         ; copy pilot BIOS's physical address LSmidB into A
-    and 0x0f                        ; change upper nibble of LSmidB to 0x6x
-    or 0x60
+    and #0x0f                       ; change upper nibble of LSmidB to 0x6x
+    or #0x60
     ld h, a                         ; copy the 0x6xxx logical address into HL
     ld l, e
 
@@ -153,13 +173,13 @@ delay_loop:
 
 wait_for_cc:
     call get_byte
-    cp 0xcc                         ; initial pilot BIOS code (flag) byte?
+    cp #0xcc                        ; initial pilot BIOS code (flag) byte?
     jr nz, wait_for_cc
     xor a
     ld (iy), a                      ; replace the 0xcc marker with 0x00 (nop)
     inc iy                          ; increment the copy-to-RAM index
     dec de                          ; one less byte to copy
-    ld bc, 0xcccc                   ; update the (initially 0x0000) 8-bit Fletcher
+    ld bc, #0xcccc                  ; update the (initially 0x0000) 8-bit Fletcher
                                     ; checksum value with the 0xcc just received
 
 load_pilot_loop:
@@ -168,10 +188,10 @@ load_pilot_loop:
 
 ; Use 8-bit Fletcher checksum algorithm. See RFC1145 for more info.
     add a, b
-    adc a, 0x00
+    adc a, #0x00
     ld b, a                         ; A = A + D[i]
     add a, c
-    adc a, 0x00
+    adc a, #0x00
     ld c, a                         ; B = B + A
 
     inc iy                          ; increment the copy-to-RAM index
@@ -189,34 +209,32 @@ load_pilot_loop:
 ;   ioi ld (WDTTR), a               ; reenable the watchdog timer
 
     jp (ix)                         ; start running pilot bios
-#endasm
 
-#asm
 get_byte::
 pollrxbuf:
-    ioi ld a, (SASR)                ; check byte receive status
+    ioi
+    ld a, (SASR)                    ; check byte receive status
     bit 7, a
     jr z, pollrxbuf                 ; wait until byte received
-    ioi ld a, (SADR)                ; get byte
+    ioi
+    ld a, (SADR)                    ; get byte
     ret
-#endasm
 
-#asm
 ; Must not destroy register A!! Destroys HL'.
 send_byte::
     exx
 polltxbuf:
-    ld hl, SASR
-    ioi bit 3, (hl)
+    ld hl, #SASR
+    ioi
+    bit 3, (hl)
     jr nz, polltxbuf                ; wait for serial port A not busy
-    ioi ld (SADR), a                ; send byte
+    ioi
+    ld (SADR), a                    ; send byte
     exx
     ret
-#endasm
 
-#asm
 timeout::
-    ld e, 0x55
+    ld e, #0x55
     jr timeout
+
 coldloadend::
-#endasm
