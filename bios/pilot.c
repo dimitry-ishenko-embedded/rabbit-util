@@ -5,70 +5,21 @@
    License, v. 2.0. If a copy of the MPL was not distributed with this
    file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-/*************************************************************
-Pilot BIOS source code
-
-This is what Dynamic C uses to load the regular BIOS to RAM
-
-The new TC protocol is used...
-
-*************************************************************/
-
-// Note:  The "PILOT_BIOS" macro should be placed in the
-//  Project Options' Defines box.  This allows the standard
-//  RabbitBios.c file, with appropriate conditional compilation
-//  directives, to be used to compile the Pilot BIOS.
-//#define PILOT_BIOS
 
 #pragma DATAWAITSUSED off
 #memmap root
 
-#ifndef _RAM_
-	#error "Must compile pilot BIOS to RAM."
-#endif
-
-#ifdef __SEPARATE_INST_DATA__
-#if __SEPARATE_INST_DATA__
-#error "Turn off separate I&D space."
-#endif
-#endif
-
-// uncomment the following macro to create a RAM-only pilot BIOS
-//#define RAMONLYPILOT
-
-// uncomment the following macro to create a pilot BIOS
-//  without ID/User Blocks sector erase protection
-//#define PB_UNRESTRICTED_ERASES
-
-// uncomment the following macro to create a pilot BIOS
-//  without ID/User Blocks sector write protection
-//#define PB_UNRESTRICTED_WRITES
-
 // Directives to locate the code and data correctly for the pilot BIOS.
 #rcodorg rootcode2 0x00 0x6000 0x1800 apply
 #rvarorg rootdata2 0x00 0x7FFF 0x0800 apply
-
-// turn this on to debug the ISR via PD0
-//#define PB_TRACE_ISR
-
-// uncomment this to debug the pilot via serial port B
-//#define PB_DEBUG_SERB
 
 // where the PilotBIOS resides in LOGICAL space
 #define PILOT_LOCATION	0x6000
 // this size MUST be EVEN! (or the copy loop will fail)
 #define PILOT_SIZE		0x2000
 
-#ifdef RAMONLYPILOT
-#define RAM_CS_TO_USE 0x40	// 2 ws, /OE0/WE0/CS0
-#else
 // the RAM control lines to use (uncomment exactly one of the following list):
 #define RAM_CS_TO_USE 0x45	// 2 ws, /OE1/WE1/CS1
-//#define RAM_CS_TO_USE 0x46	// 2 ws, /OE1/WE1/CS2
-//#define RAM_CS_TO_USE 0x44	// 2 ws, /OE1/WE1/CS0
-//#define RAM_CS_TO_USE 0x41	// 2 ws, /OE0/WE0/CS1
-//#define RAM_CS_TO_USE 0x42	// 2 ws, /OE0/WE0/CS2
-#endif	// RAMONLYPILOT
 
 // the serial port to use
 #define _PB_SxCR			SACR
@@ -171,15 +122,6 @@ premain::
 main::
 	db		0CCh		; loader looks for this byte; then replaces with 00h
 
-#ifdef PB_TRACE_ISR
-	; enable PD0 to trace the ISR
-	ld		a,0x01
-	ioi ld (PDDDR),a
-	ld		a,0x00
-	ioi ld (PDDCR),a
-	ioi ld (PDDR),a
-#endif
-
 ;**** Grab the 19200 baud frequency divider
 	ld		a,(FREQADRS)
 	ld		(PB_DIV19200),a
@@ -252,34 +194,6 @@ main::
 	ld		a, 0x5A
 	ioi	ld (WDTCR), a
 
-#if 0
-	; prepare the blinkenlights for a jackrabbit board (8 PADR lights)
-	ld		a,0x84
-	ioi ld (SPCR),a
-	; turn the lights off first...
-	ld		a,0x55
-	ioi ld (PADR),a
-#endif
-
-#if 0
-		; prepare the blinkenlights for an RCM2000 proto-board (8 PADR LEDs)
-		ld		a, 0x84
-ioi	ld		(SPCR), a
-		; initially, turn the (active low) LEDs off
-		ld		a, 0xFF
-ioi	ld		(PADR), a
-#endif
-
-#if 0
-	; prepare the blinkenlights for an RCM2300 (PE1 & PE7)
-	ld		a,0x82
-	ioi ld (PEDDR),a
-	ld		a,0x00
-	ioi ld (PEFR),a
-	ld		a,0x82
-	ioi ld (PEDR),a
-#endif
-
 	ipset 1
 
 ._PB_SetProgPort:
@@ -315,27 +229,6 @@ ioi	ld		(PADR), a
 		; initialize stack pointer
 		ld		hl, sysStack+@LENGTH
 		ld		sp, hl
-#if 0		// start Port A debug LEDs output conditional code block
-		push	af
-		; inspect SP register content
-		bool	hl
-      ld		l, h
-		adc	hl, sp
-;      ld		a, h
-      ld		a, l
-		; inspect IP register content
-;		push	ip
-;      push	ip
-;      pop	af
-      cpl
-ioi	ld		(PADR), a
-		pop	af
-#endif	// end Port A debug LEDs output conditional code block
-#ifdef PB_DEBUG_SERB
-	; initialize serial B debug info output tools (mustn't call this
-	;  before the pilot BIOS's stack is set up, as done just above!)
-	call	_initserial_dbg
-#endif
 	ld 	hl, 0x0C
 	call	_PB_readIDBlock
 	bool	hl
@@ -351,46 +244,6 @@ ioi	ld		(PADR), a
 	djnz	.blockEraseLoop
 
 ._PB_idBlockOk:
-#if 0		// start serial B debug conditional code block
-		push	af				; preserve A, F registers' content
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+flashID+3)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashID+2)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashID+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashID+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+flashType+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashType+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+flashSize+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashSize+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+sectorSize+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+sectorSize+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+numSectors+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+numSectors+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-		ld		a, (_PB_SysIDBlock+flashSpeed+1)
-		call	_sendbyte_dbg
-		ld		a, (_PB_SysIDBlock+flashSpeed+0)
-		call	_sendbyte_dbg
-		call	_sendcrnl_dbg
-;		call	_sendchar_dbg
-		pop	af				; restore A, F registers' content
-#endif	// end serial B debug conditional code block
 
 _PB_CheckClockDoubler::
 	call	_PB_getDoublerSetting
@@ -405,16 +258,11 @@ _PB_CheckClockDoubler::
 .dont_double:
 	ld		(PB_FREQDIVIDER), a	; use this value for baud rate calcs
 
-#ifndef RAMONLYPILOT
 	;; initialize flash driver later, but get the flash ID now (for the info probe)
 	ld		a, 0x72
 	ld		(_FlashInfo+flashXPC), a
 
 	call	_GetFlashID
-#else
-	bool	hl
-	ld		l, h
-#endif
 
 	ld		(PB_FLASH_ID), hl
 
@@ -452,7 +300,6 @@ _PB_LockupPilotBios::
 ;//****** Init the flash driver... ****************************
 
 _PB_InitFlashDriver::
-#ifndef RAMONLYPILOT
 		ld		a, RAM_CS_TO_USE
 		ld		(MB0CRShadow), a
 		ld		(MB1CRShadow), a
@@ -476,29 +323,6 @@ _PB_InitFlashDriver::
 		ld		(MB3CRShadow), a
 ioi	ld		(MB3CR), a			; (speculatively) map 2nd flash into MB3CR quadrant
 .done_PB_IFD:
-#if 0		// start Port A debug LEDs output conditional code block
-		push	af
-		; inspect SP register content
-;		bool	hl
-;		ld		l, h
-;		adc	hl, sp
-;		ld		a, h
-;		ld		a, l
-		; inspect IP register content
-;		push	ip
-;		push	ip
-;		pop	af
-		; inspect UserBlockSector
-;		ld		a, (UserBlockSector+1)
-		ld		a, (UserBlockSector)
-		; inspect UserBlockSector
-;		ld		a, (IDBlockSector+1)
-;		ld		a, (IDBlockSector)
-		cpl
-ioi	ld		(PADR), a
-		pop	af
-#endif	// end Port A debug LEDs output conditional code block
-#endif
 	ret
 
 ;//****** Read the ID block... ****************************
@@ -586,7 +410,6 @@ _PB_readIDBlock::
 
 	ld		xpc, a				; a:hl now points to ID block in flash
 
-#if 1
 	; Small diversion to convert address of idblock to a physical address
    ; and store in PB_IDBLOCK_PADDR.
   	ex		de,hl								; a=segment, hl=logical address
@@ -621,7 +444,6 @@ _PB_readIDBlock::
    ld		(PB_IDBLOCK_PADDR+2), hl
    ; Finished calculation of PB_IDBLOCK_PADDR. Continue with IDblock read.
    ex 	de', hl				; restore logical address
-#endif
 	ld		de, _PB_SysIDBlock		; de now points to struct in RAM
 	ldir									; copy entire block to RAM
 
@@ -766,11 +588,6 @@ _PB_getcrc::
 	exx								; ISR has the ALT register set!
 	ex		af,af'					; it may use: a, hl, bc, de only!
 
-#ifdef PB_TRACE_ISR
-	ld		a,0x01
-	ioi ld (PDDR),a				; set PD0 high
-#endif
-
 	ioi ld a,(_PB_SxSR)			; what type of int is this?
 	bit	7,a
 	jr		z,._PBNotRXInt
@@ -804,11 +621,6 @@ _PB_getcrc::
 	ioi ld (_PB_SxSR),a
 
 ._PBReadyToExit:
-#ifdef PB_TRACE_ISR
-	ld		a,0x00
-	ioi ld (PDDR),a				; set PD0 low
-#endif
-
 	ex		af,af'
 	exx
 	ipres
@@ -1530,17 +1342,11 @@ _PB_Relocate::
 	jr   	c, .noChangeXPC					; writing to second flash?
 	ld    a, 0xB2
 	ld 	(_FlashInfo+flashXPC), a	; fool flash driver into pointing to 2nd flash
-#ifdef PB_UNRESTRICTED_WRITES
-; always enable ID/User Blocks overwrite!
-.noChangeXPC:
-#endif
 	bool	hl
 	inc	hl										; ensure HL is nonzero, disable
 	ld		(_overwrite_block_flag), hl	;  ID/User Blocks protection!
-#ifndef PB_UNRESTRICTED_WRITES
 ; don't enable ID/User Blocks overwrite
 .noChangeXPC:
-#endif
 	push	ip
 	ipset	3						; turn off interupts while in the flash-writer!
 	call	FSM_XFlash			; write it all!
@@ -1674,11 +1480,6 @@ _PB_Relocate::
 	ld		bc, 0x0000						; shorthand for erase all sectors
 
 ._PB_eraseFirst:
-#ifdef PB_UNRESTRICTED_ERASES
-	bool	hl
-	inc	hl										; ensure HL is nonzero, disable
-	ld		(_overwrite_block_flag), hl	;  ID/User Blocks protection!
-#endif
 	call	_EraseFlashChip
 	bool	hl
 	jp		nz,._PB_NakPacket				; error in erase flash (shouldn't happen)
@@ -1910,67 +1711,6 @@ _PB_getDoublerSetting::
 									; > 25.8048 MHz, return disabled doubler setting
 ._PB_gds_done:
 	ret
-
-
-#ifdef PB_DEBUG_SERB
-; serial B debug info output tools
-_initserial_dbg::
-;	ld		a, 3						;; 56kb @ 7 MHz
-;	ld		a, 4						;; 56kb @ 9.2 MHz
-;	ld		a, 16						;; 56kb @ 11 MHz
-;	ld		a, 7						;; 56kb @ 14 MHz
-;	ld		a, 11						;; 56kb @ 22 MHz
-;	ld		a, 15						;; 56kb @ 29 MHz
-;
-	ld		a, (PB_DIV19200)		;; 19k2 @ any MHz
-	ioi	ld (TAT5R), a
-	ld		a, 0xF0
-	ioi	ld (PCFR), a
-	xor	a
-	ioi	ld (SBCR), a
-	ret
-
-_sendchar_dbg::
-	push	af
-.wait:
-	ioi	ld a, (SBSR)
-	bit	2, a
-	jr		nz, .wait
-	pop	af
-	ioi	ld	(SBDR), a
-	ret
-
-_sendcrnl_dbg::
-	ld		a, 10
-	call	_sendchar_dbg
-	ld		a, 13
-	call	_sendchar_dbg
-	ret
-
-_sendbyte_dbg::
-	push	af
-	and	0xF0
-	srl	a
-	srl	a
-	srl	a
-	srl	a
-	add	a, '0'
-	cp		'9'+1
-	jr		c, .nohex1
-	add	a, 7
-.nohex1:
-	call	_sendchar_dbg
-
-	pop	af
-	and	0x0F
-	add	a, '0'
-	cp		'9'+1
-	jr		c, .nohex2
-	add	a, 7
-.nohex2:
-	call	_sendchar_dbg
-	ret
-#endif
 
 _PB_EndOfpilot_c::
 #endasm
