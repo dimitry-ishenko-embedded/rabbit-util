@@ -6,8 +6,8 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#ifndef __TC_DEFS_LIB
-#define __TC_DEFS_LIB
+#ifndef TC_DEFS_H
+#define TC_DEFS_H
 
 #include "misc_types.h"
 
