@@ -6,8 +6,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#ifndef __TYPES_H
-#define __TYPES_H
+#ifndef MISC_TYPES_H
+#define MISC_TYPES_H
 
 #include <stdint.h>
 

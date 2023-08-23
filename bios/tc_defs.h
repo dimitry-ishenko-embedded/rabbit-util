@@ -9,7 +9,7 @@
 #ifndef __TC_DEFS_LIB
 #define __TC_DEFS_LIB
 
-#include "types.h"
+#include "misc_types.h"
 
 // the main version number
 #define TC_VERSION 0x02
