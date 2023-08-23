@@ -61,16 +61,6 @@ char          PB_USEDOUBLER;
 unsigned long _PB_CPUID;
 unsigned long PB_IDBLOCK_PADDR; // physical address of the system id block
 
-//root int ._PB_Entry();        // entry point for the Pilot BIOS finite state machine
-root int _PB_Init() ;           // initilaization for the Pilot BIOS finite state machine
-root _PB_WriteMem();
-root _PB_ReadProgPort();
-root _PB_WriteProgPort();
-//root ._PB_InitTC();
-root _PB_SetIntVecTab();
-root int _PB_readIDBlock(int flashBitMap);
-root int _PB_getcrc(char *Data, char count, int accum);
-
 #define HIXPC                   0x71
 #define LOXPCBASE               0xf9
 #define DIVADRS                 0x3f00
