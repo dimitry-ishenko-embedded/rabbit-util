@@ -83,34 +83,34 @@
  * information provided in the tc_send() function
  */
 typedef struct {
-    uint8_t  version;
-    uint8_t  flags;
-    uint8_t  type;
-    uint8_t  subtype;
-    uint16_t length;
-    uint16_t header_checksum;
+    uint8_t  version;           // +0
+    uint8_t  flags;             // +1
+    uint8_t  type;              // +2
+    uint8_t  subtype;           // +3
+    uint16_t length;            // +4
+    uint16_t header_checksum;   // +6
 } _TC_PacketHeader;
 
-#define TC_HEADER_SIZE sizeof(_TC_PacketHeader)
+#define TC_HEADER_SIZE          8
 
 // the main footer - this will be auto-generated for each packet
 typedef struct {
-    uint16_t checksum;
+    uint16_t checksum;          // +0
 } _TC_PacketFooter;
 
-#define TC_FOOTER_SIZE sizeof(_TC_PacketFooter)
+#define TC_FOOTER_SIZE          2
 
 // buffer header - space for this needs to be allocated by the user in their buffers
 typedef struct {
-    faraddr_t next;
-    uint16_t  flags;
-    uint16_t  length;
-    uint8_t   type;
-    uint8_t   subtype;
-    uint32_t  userdata;
+    faraddr_t next;             // +0
+    uint16_t  flags;            // +4
+    uint16_t  length;           // +6
+    uint8_t   type;             // +8
+    uint8_t   subtype;          // +9
+    uint32_t  userdata;         // +10
 } _TCHeader;
 
-#define TC_HEADER_RESERVE sizeof(_TCHeader)
+#define TC_HEADER_RESERVE       14
 
 // offsets for the header
 #define TC_HEADER_NEXT          0x00
