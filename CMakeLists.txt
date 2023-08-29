@@ -14,3 +14,4 @@ set(BIOS_INSTALL_FULL_DIR ${CMAKE_INSTALL_FULL_LIBEXECDIR}/${CMAKE_PROJECT_NAME}
 
 ####################
 add_subdirectory(bios)
+add_subdirectory(raad)
