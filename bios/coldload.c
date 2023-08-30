@@ -109,26 +109,26 @@ delay_loop:
     ld (PCFR), a
 
     call _get_byte
-    ld e, a                         ; pilot BIOS's begin physical address LSB
+    ld e, a                         ; pilot BIOS begin physical address LSB
 
     call _get_byte
-    ld d, a                         ; pilot BIOS's begin physical address LSmidB
+    ld d, a                         ; pilot BIOS begin physical address LSmidB
 
     call _get_byte
-    ld c, a                         ; pilot BIOS's begin physical address MSmidB
+    ld c, a                         ; pilot BIOS begin physical address MSmidB
 
     call _get_byte
-    ld b, a                         ; pilot BIOS's begin physical address MSB
+    ld b, a                         ; pilot BIOS begin physical address MSB
 
     call _get_byte
-    ld l, a                         ; pilot BIOS's size LSB
+    ld l, a                         ; pilot BIOS size LSB
 
     call _get_byte
-    ld h, a                         ; pilot BIOS's size MSB
+    ld h, a                         ; pilot BIOS size MSB
 
     call _get_byte
     altd
-    ld a, a                         ; store received checksum in A'
+    ld a, a                         ; store received checksum in alt A
 
     ld a, e                         ; initialize and calculate local checksum
     add a, d
@@ -145,14 +145,14 @@ delay_loop:
     jp nz, _timeout                 ; if checksums do not match error out
 
     exx
-    push hl                         ; save pilot BIOS's size
-    ld h, c                         ; copy pilot BIOS's begin physical address middle
+    push hl                         ; save pilot BIOS size
+    ld h, c                         ; copy pilot BIOS begin physical address middle
     ld l, d                         ; bytes into HL
     rr hl                           ; shift physical address bits 19:12 into L
     rr hl
     rr hl
     rr hl
-    ld a, l                         ; copy pilot BIOS's physical address bits 19:12 into A
+    ld a, l                         ; copy pilot BIOS physical address bits 19:12 into A
     sub #0x06                       ; calculate DATASEG value for pilot at 0x6000 logical
     ioi
     ld (DATASEG), a
@@ -160,7 +160,7 @@ delay_loop:
     ioi
     ld (SEGSIZE), a
 
-    ld a, d                         ; copy pilot BIOS's physical address LSmidB into A
+    ld a, d                         ; copy pilot BIOS physical address LSmidB into A
     and #0x0f                       ; change upper nibble of LSmidB to 0x6x
     or #0x60
     ld h, a                         ; copy the 0x6xxx logical address into HL
@@ -168,8 +168,8 @@ delay_loop:
 
     ld a, l
 
-    pop de                          ; recover the pilot BIOS's size into DE
-    ld iy, hl                       ; save pilot's logical begin in IY for copy-to-RAM index
+    pop de                          ; recover the pilot BIOS size into DE
+    ld iy, hl                       ; save pilot BIOS logical begin in IY for copy-to-RAM index
     ld ix, hl                       ; and in IX for the jump to the pilot BIOS
 
 wait_for_cc:
@@ -202,9 +202,9 @@ load_pilot_loop:
     or hl, de                       ; check remaining size of pilot
     jr nz, load_pilot_loop          ; repeat until size bytes are received
 
-    ld a, c                         ; send LSB of pilot BIOS's Fletcher checksum
+    ld a, c                         ; send LSB of pilot BIOS Fletcher checksum
     call _send_byte
-    ld a, b                         ; send MSB of pilot BIOS's Fletcher checksum
+    ld a, b                         ; send MSB of pilot BIOS Fletcher checksum
     call _send_byte
 
 ;   ioi ld (WDTTR), a               ; reenable the watchdog timer
@@ -230,7 +230,7 @@ __endasm;
 void send_byte() __naked
 {
 __asm
-; Must not destroy register A!! Destroys HL'.
+; Must not destroy register A!
     exx
 polltxbuf:
     ld hl, #SASR
