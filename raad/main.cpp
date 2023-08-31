@@ -6,6 +6,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #include "pgm/args.hpp"
+#include "serial_port.hpp"
 
 #include <exception>
 #include <filesystem>

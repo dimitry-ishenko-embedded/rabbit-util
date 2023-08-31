@@ -4,6 +4,8 @@ include_directories(..)
 
 add_executable(raad
     main.cpp
+    serial_port.cpp
+    serial_port.hpp
 )
 target_compile_definitions(raad
     PRIVATE BIOS_DIR="${BIOS_INSTALL_FULL_DIR}"
