@@ -7,14 +7,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#include <algorithm>
+#include <algorithm> // std::min
+#include <asio.hpp>
+#include <exception>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <stdexcept>
 #include <vector>
-
-namespace fs = std::filesystem;
 
 constexpr std::size_t max_size = 32768;
 
@@ -34,58 +32,54 @@ constexpr char prologue[]
     "\x80\x11\x74"  // STACKSEG
     "\x80\x12\x3a"  // DATASEG
 };
-
 constexpr char epilogue[] = "\x80\x24\x80";
+
+template<typename... Args>
+inline void doing(Args&&... args) { (std::cout << ... << std::forward<Args>(args)) << std::endl; }
 
 int main(int argc, char* argv[])
 try
 {
     if (argc != 3)
     {
-        auto name = fs::path{argv[0]}.filename().string();
+        auto name = std::filesystem::path{argv[0]}.filename().string();
         std::cerr << "Usage: " << name << " <input> <output>" << std::endl;
         return 1;
     };
 
-    auto path_in = fs::path{argv[1]}, path_out = fs::path{argv[2]};
-    std::cout << "input=" << path_in << " output=" << path_out << std::endl;
+    asio::io_context ctx;
+    auto path_in = argv[1], path_out = argv[2];
 
-    std::vector<char> data_in, data_out;
+    doing("Opening input file ", path_in);
+    asio::stream_file file_in{ctx, path_in, file_in.read_only};
 
-    if (std::ifstream file_in{path_in}; file_in)
+    doing("Opening output file ", path_out);
+    asio::stream_file file_out{ctx, path_out, file_out.write_only | file_out.create | file_out.truncate};
+
+    doing("Reading data from input");
+    std::vector<char> data_in;
+    asio::read(file_in, asio::dynamic_buffer(data_in, std::min(file_in.size(), max_size)));
+
+    if (file_in.size() > data_in.size()) doing("Warning: stopped after reading ", data_in.size(), " bytes from input");
+
+    doing("Writing start sequence");
+    asio::write(file_out, asio::buffer(prologue, sizeof(prologue) - 1));
+
+    doing("Converting");
+    std::vector<char> data_out(data_in.size() * 3);
+    std::size_t n = 0;
+    for (auto in = data_in.begin(), out = data_out.begin(); in != data_in.end(); ++in, ++out, ++n)
     {
-        auto size = fs::file_size(path_in);
-        data_in.resize( std::min(size, max_size) );
-
-        file_in.read(data_in.data(), data_in.size());
-        if (!file_in) throw std::runtime_error{"Error reading from input"};
-
-        if (size > max_size) std::cout << "Warning: stopped after reading " << max_size << " bytes from input" << std::endl;
+        *out = n >> 8; *++out = n; *++out = *in;
     }
-    else throw std::runtime_error{"Error opening input file"};
 
-    if (std::ofstream file_out{path_out}; file_out)
-    {
-        file_out.write(prologue, sizeof(prologue) - 1);
-        if (!file_out) throw std::runtime_error{"Error writing start sequence"};
+    doing("Writing data");
+    asio::write(file_out, asio::buffer(data_out));
 
-        data_out.resize(data_in.size() * 3);
+    doing("Writing end sequence");
+    asio::write(file_out, asio::buffer(epilogue, sizeof(epilogue) - 1));
 
-        std::size_t n = 0;
-        for (auto in = data_in.begin(), out = data_out.begin(); in != data_in.end(); ++in, ++out, ++n)
-        {
-            *out = n >> 8; *++out = n; *++out = *in;
-        }
-
-        file_out.write(data_out.data(), data_out.size());
-        if (!file_out) throw std::runtime_error{"Error writing to output"};
-
-        file_out.write(epilogue, sizeof(epilogue) - 1);
-        if (!file_out) throw std::runtime_error{"Error writing end sequence"};
-    }
-    else throw std::runtime_error{"Error opening output file"};
-
-    std::cout << "Wrote " << fs::file_size(path_out) << " bytes to output" << std::endl;
+    doing("Wrote ", file_out.size(), " bytes to output");
     return 0;
 }
 catch(const std::exception& e)
