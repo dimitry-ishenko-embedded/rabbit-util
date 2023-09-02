@@ -6,23 +6,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #include "pgm/args.hpp"
-#include "serial.hpp"
+#include "rabbit.hpp"
 
+#include <asio.hpp>
 #include <exception>
 #include <filesystem>
 #include <iostream>
-#include <stdexcept>
-#include <string>
 
-namespace fs = std::filesystem;
-
+////////////////////////////////////////////////////////////////////////////////
 constexpr auto def_coldload = BIOS_DIR "/coldload.bin";
 constexpr auto def_pilot = BIOS_DIR "/pilot.bin";
 
 int main(int argc, char* argv[])
 try
 {
-    const auto name = fs::path{argv[0]}.filename().string();
+    const auto name = std::filesystem::path{argv[0]}.filename().string();
 
     pgm::args args
     {
@@ -55,11 +53,12 @@ try
     }
     else
     {
-        auto port = args["-p"].value();
+        asio::io_context ctx;
+        auto serial = open_serial(ctx, args["-p"].value());
 
-        auto coldload = fs::path{args["-1"].value_or(def_coldload)};
-        auto pilot = fs::path{args["-2"].value_or(def_pilot)};
-        auto program = fs::path{args["program.bin"].value()};
+        auto coldload = read_file(ctx, args["-1"].value_or(def_coldload));
+        auto pilot    = read_file(ctx, args["-2"].value_or(def_pilot));
+        auto program  = read_file(ctx, args["program.bin"].value());
 
         //
     }
