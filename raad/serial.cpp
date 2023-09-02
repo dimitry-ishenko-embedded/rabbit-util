@@ -15,102 +15,58 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-void serial_port::set(::baud_rate b) { set_option(asio::serial_port::baud_rate{b}); }
-void serial_port::set(::baud_rate b, asio::error_code& ec) { set_option(asio::serial_port::baud_rate{b}, ec); }
+void baud_rate(asio::serial_port& serial, unsigned b)
+{
+    serial.set_option(asio::serial_port::baud_rate{b});
+}
 
-void serial_port::set(::flow_control f) { set_option(asio::serial_port::flow_control{f}); }
-void serial_port::set(::flow_control f, asio::error_code& ec) { set_option(asio::serial_port::flow_control{f}, ec); }
-
-void serial_port::set(::parity p) { set_option(asio::serial_port::parity{p}); }
-void serial_port::set(::parity p, asio::error_code& ec) { set_option(asio::serial_port::parity{p}, ec); }
-
-void serial_port::set(::stop_bits s) { set_option(asio::serial_port::stop_bits{s}); }
-void serial_port::set(::stop_bits s, asio::error_code& ec) { set_option(asio::serial_port::stop_bits{s}, ec); }
-
-void serial_port::set(::char_size c) { set_option(asio::serial_port::character_size{c}); }
-void serial_port::set(::char_size c, asio::error_code& ec) { set_option(asio::serial_port::character_size{c}, ec); }
+void baud_rate(asio::serial_port& serial, unsigned b, asio::error_code& ec)
+{
+    serial.set_option(asio::serial_port::baud_rate{b}, ec);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
-void serial_port::set_bit(int bit, bool s, asio::error_code& ec)
+namespace
 {
-    int fd = native_handle();
+
+void set_bit(asio::serial_port& serial, int bit, bool s, asio::error_code& ec)
+{
+    int fd = serial.native_handle();
     if (ioctl(fd, s ? TIOCMBIS : TIOCMBIC, &bit)) ec.assign(errno, asio::system_category());
 }
 
-bool serial_port::get_bit(int bit, asio::error_code& ec) const
+bool get_bit(asio::serial_port& serial, int bit, asio::error_code& ec)
 {
-    int fd = const_cast<serial_port*>(this)->native_handle();
+    int fd = serial.native_handle();
     int bits = 0;
     if (ioctl(fd, TIOCMGET, &bits)) ec.assign(errno, asio::system_category());
     return (bits & bit);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-void serial_port::cts(bool st)
-{
-    asio::error_code ec;
-    cts(st, ec);
-    asio::detail::throw_error(ec, "cts");
 }
-void serial_port::cts(bool s, asio::error_code& ec) { set_bit(TIOCM_CTS, s, ec); }
 
-bool serial_port::dcd() const
+bool dsr(asio::serial_port& serial)
 {
     asio::error_code ec;
-    auto s = dcd(ec);
-    asio::detail::throw_error(ec, "dcd");
-    return s;
-}
-bool serial_port::dcd(asio::error_code& ec) const { return get_bit(TIOCM_CAR, ec); }
-
-bool serial_port::dsr() const
-{
-    asio::error_code ec;
-    auto s = dsr(ec);
+    auto s = dsr(serial, ec);
     asio::detail::throw_error(ec, "dsr");
     return s;
 }
-bool serial_port::dsr(asio::error_code& ec) const { return get_bit(TIOCM_DSR, ec); }
+bool dsr(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_DSR, ec); }
 
-void serial_port::dtr(bool st)
+bool dtr(asio::serial_port& serial)
 {
     asio::error_code ec;
-    dtr(st, ec);
-    asio::detail::throw_error(ec, "dtr");
-}
-void serial_port::dtr(bool s, asio::error_code& ec) { set_bit(TIOCM_DTR, s, ec); }
-
-bool serial_port::dtr() const
-{
-    asio::error_code ec;
-    auto s = dtr(ec);
+    auto s = dtr(serial, ec);
     asio::detail::throw_error(ec, "dtr");
     return s;
 }
-bool serial_port::dtr(asio::error_code& ec) const { return get_bit(TIOCM_DTR, ec); }
+bool dtr(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_DTR, ec); }
 
-bool serial_port::ri() const
+void dtr(asio::serial_port& serial, bool s)
 {
     asio::error_code ec;
-    auto s = ri(ec);
-    asio::detail::throw_error(ec, "ri");
-    return s;
+    dtr(serial, s, ec);
+    asio::detail::throw_error(ec, "dtr");
 }
-bool serial_port::ri(asio::error_code& ec) const { return get_bit(TIOCM_RI, ec); }
-
-void serial_port::rts(bool st)
-{
-    asio::error_code ec;
-    rts(st, ec);
-    asio::detail::throw_error(ec, "rts");
-}
-void serial_port::rts(bool s, asio::error_code& ec) { set_bit(TIOCM_RTS, s, ec); }
-
-bool serial_port::rts() const
-{
-    asio::error_code ec;
-    auto s = rts(ec);
-    asio::detail::throw_error(ec, "rts");
-    return s;
-}
-bool serial_port::rts(asio::error_code& ec) const { return get_bit(TIOCM_RTS, ec); }
+void dtr(asio::serial_port& serial, bool s, asio::error_code& ec) { set_bit(serial, TIOCM_DTR, s, ec); }
