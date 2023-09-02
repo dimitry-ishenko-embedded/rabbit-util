@@ -5,7 +5,7 @@
 // Distributed under the GNU GPL license. See the LICENSE.md file for details.
 
 ////////////////////////////////////////////////////////////////////////////////
-#include "serial_port.hpp"
+#include "serial.hpp"
 
 #if defined(__unix__) || defined(__APPLE__)
   #include <cerrno>

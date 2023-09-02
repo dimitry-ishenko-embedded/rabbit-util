@@ -5,8 +5,8 @@
 // Distributed under the GNU GPL license. See the LICENSE.md file for details.
 
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef SERIAL_PORT_HPP
-#define SERIAL_PORT_HPP
+#ifndef SERIAL_HPP
+#define SERIAL_HPP
 
 #include <asio.hpp>
 
