@@ -60,6 +60,8 @@ try
         auto pilot    = read_file(ctx, args["-2"].value_or(def_pilot));
         auto program  = read_file(ctx, args["program.bin"].value());
 
+        reset_target(serial);
+        detect_target(serial);
         //
     }
 

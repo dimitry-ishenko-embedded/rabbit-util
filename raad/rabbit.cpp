@@ -7,9 +7,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "rabbit.hpp"
 
+#include <chrono>
 #include <cmath> // std::round
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <thread>
+
+using namespace std::chrono_literals;
+using namespace std::this_thread;
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace
@@ -46,6 +52,7 @@ try
 }
 catch(...) { fail(); throw; }
 
+////////////////////////////////////////////////////////////////////////////////
 payload read_file(asio::io_context& ctx, const std::string& path)
 try
 {
@@ -61,5 +68,67 @@ try
     done();
 
     return data;
+}
+catch(...) { fail(); throw; }
+
+////////////////////////////////////////////////////////////////////////////////
+namespace
+{
+
+// ioi ld (WDTTR), 0x51
+// ioi ld (WDTTR), 0x54
+constexpr char disable_wd[] = "\x80\x09\x51\x80\x09\x54";
+
+// ioi ld (GOCR), 0x30
+constexpr char status_hi[] = "\x80\x0e\x30";
+
+// ioi ld (GOCR), 0x20
+constexpr char status_lo[] = "\x80\x0e\x20";
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void reset_target(asio::serial_port& serial)
+try
+{
+    doing("Resetting target");
+
+    dtr(serial, hi);
+    sleep_for(250ms);
+
+    dtr(serial, lo);
+    sleep_for(350ms);
+
+    done();
+}
+catch(...) { fail(); throw; }
+
+////////////////////////////////////////////////////////////////////////////////
+void detect_target(asio::serial_port& serial)
+try
+{
+    doing("Detecting presence");
+
+    baud_rate(serial, 2400);
+
+    // disable watchdog
+    doing("W");
+    asio::write(serial, asio::buffer(disable_wd, sizeof(disable_wd) - 1));
+
+    // tell Rabbit to set the /STATUS pin high
+    doing("H");
+    asio::write(serial, asio::buffer(status_hi, sizeof(status_hi) - 1));
+    sleep_for(100ms);
+    // check the /STATUS pin
+    if (dsr(serial)) throw std::runtime_error{"Target not responding"};
+
+    // tell Rabbit to set the /STATUS pin low
+    doing("L");
+    asio::write(serial, asio::buffer(status_lo, sizeof(status_lo) - 1));
+    sleep_for(100ms);
+    // check the /STATUS pin
+    if (!dsr(serial)) throw std::runtime_error{"Target not responding"};
+
+    done();
 }
 catch(...) { fail(); throw; }
