@@ -12,13 +12,13 @@
 
 #include <asio.hpp>
 #include <cmath>
-#include <cstdint> // std::size_t
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
-using payload = std::vector<char>;
+using payload = std::vector<std::uint8_t>;
 
 template<std::size_t N>
 constexpr auto size(const char (&)[N]) { return N - 1; }
