@@ -27,5 +27,9 @@ void dtr(asio::serial_port&, bool, asio::error_code&);
 void drain(asio::serial_port&);
 void drain(asio::serial_port&, asio::error_code&);
 
+enum que { que_in, que_out, que_both };
+void flush(asio::serial_port&, que);
+void flush(asio::serial_port&, que, asio::error_code&);
+
 ////////////////////////////////////////////////////////////////////////////////
 #endif

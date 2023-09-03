@@ -84,3 +84,17 @@ void drain(asio::serial_port& serial, asio::error_code& ec)
     int fd = serial.native_handle();
     if (tcdrain(fd)) ec.assign(errno, asio::system_category());
 }
+
+void flush(asio::serial_port& serial, que que)
+{
+    asio::error_code ec;
+    flush(serial, que, ec);
+    asio::detail::throw_error(ec, "flush");
+}
+
+void flush(asio::serial_port& serial, que que, asio::error_code& ec)
+{
+    int fd = serial.native_handle();
+    int qs = (que == que_in) ? TCIFLUSH : (que == que_out) ? TCOFLUSH : (que == que_both) ? TCIOFLUSH : -1;
+    if (tcflush(fd, qs)) ec.assign(errno, asio::system_category());
+}
