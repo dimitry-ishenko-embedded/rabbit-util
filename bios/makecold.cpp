@@ -7,12 +7,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#include <algorithm> // std::min
+#include "file.hpp"
+#include "message.hpp"
+
 #include <asio.hpp>
 #include <exception>
 #include <filesystem>
 #include <iostream>
-#include <vector>
+
+namespace fs = std::filesystem;
 
 constexpr std::size_t max_size = 32768;
 
@@ -34,52 +37,41 @@ constexpr char prologue[]
 };
 constexpr char epilogue[] = "\x80\x24\x80";
 
-template<typename... Args>
-inline void doing(Args&&... args) { (std::cout << ... << std::forward<Args>(args)) << std::endl; }
-
 int main(int argc, char* argv[])
 try
 {
     if (argc != 3)
     {
-        auto name = std::filesystem::path{argv[0]}.filename().string();
+        auto name = fs::path{argv[0]}.filename().string();
         std::cerr << "Usage: " << name << " <input> <output>" << std::endl;
         return 1;
     };
 
-    asio::io_context ctx;
     auto path_in = argv[1], path_out = argv[2];
+    message("input=", path_in, " output=", path_out, "\n");
 
-    doing("Opening input file ", path_in);
-    asio::stream_file file_in{ctx, path_in, file_in.read_only};
+    asio::io_context ctx;
 
-    doing("Opening output file ", path_out);
-    asio::stream_file file_out{ctx, path_out, file_out.write_only | file_out.create | file_out.truncate};
-
-    doing("Reading data from input");
-    std::vector<char> data_in;
-    asio::read(file_in, asio::dynamic_buffer(data_in, std::min(file_in.size(), max_size)));
-
-    if (file_in.size() > data_in.size()) doing("Warning: stopped after reading ", data_in.size(), " bytes from input");
-
-    doing("Writing start sequence");
-    asio::write(file_out, asio::buffer(prologue, sizeof(prologue) - 1));
-
-    doing("Converting");
-    std::vector<char> data_out(data_in.size() * 3);
-    std::size_t n = 0;
-    for (auto in = data_in.begin(), out = data_out.begin(); in != data_in.end(); ++in, ++out, ++n)
-    {
-        *out = n >> 8; *++out = n; *++out = *in;
+    payload data_in = read_file(ctx, path_in, max_size);
+    if (fs::file_size(path_in) > data_in.size()) {
+        message("WARNING: stopped after reading ", data_in.size(), " bytes from input\n");
     }
 
-    doing("Writing data");
-    asio::write(file_out, asio::buffer(data_out));
+    auto file_out = open_file(ctx, path_out, flags::write_only | flags::create | flags::truncate);
 
-    doing("Writing end sequence");
-    asio::write(file_out, asio::buffer(epilogue, sizeof(epilogue) - 1));
+    payload data_out(data_in.size() * 3);
+    do_("Converting input data", [&]{
+        std::size_t n = 0;
+        for (auto in = data_in.begin(), out = data_out.begin(); in != data_in.end(); ++in, ++out, ++n) {
+            *out = n >> 8; *++out = n; *++out = *in;
+        }
+    });
 
-    doing("Wrote ", file_out.size(), " bytes to output");
+    do_("Writing start sequence", [&]{ asio::write(file_out, asio::buffer(prologue, size(prologue))); });
+    do_("Writing data",           [&]{ asio::write(file_out, asio::buffer(data_out)); });
+    do_("Writing end sequence",   [&]{ asio::write(file_out, asio::buffer(epilogue, size(epilogue))); });
+
+    message("Wrote ", file_out.size(), " bytes to output\n");
     return 0;
 }
 catch(const std::exception& e)

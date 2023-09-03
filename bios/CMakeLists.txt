@@ -1,8 +1,7 @@
 ####################
 ## makecold
 add_executable(makecold EXCLUDE_FROM_ALL makecold.cpp)
-target_compile_definitions(makecold PRIVATE ASIO_HAS_IO_URING ASIO_DISABLE_EPOLL)
-target_link_libraries(makecold uring)
+target_link_libraries(makecold common uring)
 
 ## coldload.bin
 add_custom_command(OUTPUT coldload.ihx
