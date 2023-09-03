@@ -15,5 +15,8 @@ set(BIOS_INSTALL_FULL_DIR ${CMAKE_INSTALL_FULL_LIBEXECDIR}/${CMAKE_PROJECT_NAME}
 ####################
 add_subdirectory(common)
 
+add_library(pgm_args INTERFACE pgm/args.hpp pgm/args.ipp)
+target_include_directories(pgm_args INTERFACE .)
+
 add_subdirectory(bios)
 add_subdirectory(raad)

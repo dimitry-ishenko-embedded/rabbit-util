@@ -1,7 +1,5 @@
 ####################
 ## raad
-include_directories(..)
-
 add_executable(raad
     main.cpp
     rabbit.cpp
@@ -14,4 +12,4 @@ target_compile_definitions(raad
     PRIVATE VERSION="${PROJECT_VERSION}"
     PRIVATE ASIO_HAS_IO_URING ASIO_DISABLE_EPOLL
 )
-target_link_libraries(raad uring)
+target_link_libraries(raad pgm_args uring)
