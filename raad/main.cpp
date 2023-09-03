@@ -5,6 +5,7 @@
 // Distributed under the GNU GPL license. See the LICENSE.md file for details.
 
 ////////////////////////////////////////////////////////////////////////////////
+#include "file.hpp"
 #include "pgm/args.hpp"
 #include "rabbit.hpp"
 
