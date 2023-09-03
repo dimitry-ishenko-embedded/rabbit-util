@@ -38,8 +38,23 @@ constexpr char status_hi[] = "\x80\x0e\x30";
 // ioi ld (GOCR), 0x20
 constexpr char status_lo[] = "\x80\x0e\x20";
 
+void send_file(asio::serial_port& serial, const payload& data, std::size_t max_size = 0)
+{
+    if (max_size == 0) max_size = data.size();
+    else if (max_size > data.size()) max_size = data.size();
+
+    asio::write(serial, asio::buffer(data), [=](const asio::error_code& ec, std::size_t n)
+    {
+        auto pct = n * 100 / max_size;
+        message(n, "%... ", std::string(5 + ((n < 10) ? 1 : (n < 100) ? 2 : 3), '\b'));
+        return max_size - n;
+    });
+    message("100%... ");
 }
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void reset_target(asio::serial_port& serial)
 {
     do_("Resetting target", [&]{
@@ -51,7 +66,6 @@ void reset_target(asio::serial_port& serial)
     });
 }
 
-////////////////////////////////////////////////////////////////////////////////
 void detect_target(asio::serial_port& serial)
 {
     do_("Detecting presence", [&]{
@@ -74,5 +88,15 @@ void detect_target(asio::serial_port& serial)
         sleep_for(100ms);
         // check the /STATUS pin
         if (!dsr(serial)) throw std::runtime_error{"Target not responding"};
+    });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void send_stage1(asio::serial_port& serial, const payload& coldload)
+{
+    do_("Sending initial loader", [&]{
+        baud_rate(serial, 2400);
+        send_file(serial, coldload);
+        sleep_for(100ms);
     });
 }

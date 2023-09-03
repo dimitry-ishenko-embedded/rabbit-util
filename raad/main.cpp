@@ -63,6 +63,8 @@ try
 
         reset_target(serial);
         detect_target(serial);
+
+        send_stage1(serial, coldload);
         //
     }
 
