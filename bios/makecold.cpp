@@ -23,8 +23,7 @@ constexpr std::size_t max_size = 32768;
  *	These are the first few bytes of the coldload sequence.
  *	They are used to set up some of the configuration registers.
  */
-constexpr char prologue[]
-{
+constexpr char prologue[] {
     "\x80\x00\x08"  // GCSR: no periodic int, main osc no div
     "\x80\x10\x00"  // MMIDR: normal operation
     "\x80\x14\x45"  // MB0CR: 2 ws, /OE1, /WE1, /CS1 active
@@ -40,8 +39,7 @@ constexpr char epilogue[] = "\x80\x24\x80";
 int main(int argc, char* argv[])
 try
 {
-    if (argc != 3)
-    {
+    if (argc != 3) {
         auto name = fs::path{argv[0]}.filename().string();
         std::cerr << "Usage: " << name << " <input> <output>" << std::endl;
         return 1;
