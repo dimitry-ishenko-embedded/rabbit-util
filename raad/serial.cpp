@@ -70,3 +70,17 @@ void dtr(asio::serial_port& serial, bool s)
     asio::detail::throw_error(ec, "dtr");
 }
 void dtr(asio::serial_port& serial, bool s, asio::error_code& ec) { set_bit(serial, TIOCM_DTR, s, ec); }
+
+////////////////////////////////////////////////////////////////////////////////
+void drain(asio::serial_port& serial)
+{
+    asio::error_code ec;
+    drain(serial, ec);
+    asio::detail::throw_error(ec, "drain");
+}
+
+void drain(asio::serial_port& serial, asio::error_code& ec)
+{
+    int fd = serial.native_handle();
+    if (tcdrain(fd)) ec.assign(errno, asio::system_category());
+}

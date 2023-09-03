@@ -24,5 +24,8 @@ bool dtr(asio::serial_port&, asio::error_code&);
 void dtr(asio::serial_port&, bool);
 void dtr(asio::serial_port&, bool, asio::error_code&);
 
+void drain(asio::serial_port&);
+void drain(asio::serial_port&, asio::error_code&);
+
 ////////////////////////////////////////////////////////////////////////////////
 #endif
