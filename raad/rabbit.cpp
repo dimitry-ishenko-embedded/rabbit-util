@@ -44,8 +44,8 @@ void send_file(asio::serial_port& serial, const payload& data, std::size_t max_s
     else if (max_size > data.size()) max_size = data.size();
 
     asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, std::size_t n){
-        auto pct = n * 100 / max_size;
-        message(n, "%... ", std::string(5 + ((n < 10) ? 1 : (n < 100) ? 2 : 3), '\b'));
+        auto pc = n * 100 / max_size;
+        message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
         return max_size - n;
     });
 
@@ -74,11 +74,11 @@ void detect_target(asio::serial_port& serial)
 
         // disable watchdog
         doing("W");
-        asio::write(serial, asio::buffer(disable_wd, sizeof(disable_wd) - 1));
+        asio::write(serial, asio::buffer(disable_wd, size(disable_wd)));
 
         // tell Rabbit to set the /STATUS pin high
         doing("H");
-        asio::write(serial, asio::buffer(status_hi, sizeof(status_hi) - 1));
+        asio::write(serial, asio::buffer(status_hi, size(status_hi)));
         drain(serial);
 
         // check the /STATUS pin
@@ -87,7 +87,7 @@ void detect_target(asio::serial_port& serial)
 
         // tell Rabbit to set the /STATUS pin low
         doing("L");
-        asio::write(serial, asio::buffer(status_lo, sizeof(status_lo) - 1));
+        asio::write(serial, asio::buffer(status_lo, size(status_lo)));
         drain(serial);
 
         // check the /STATUS pin
