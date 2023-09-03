@@ -43,12 +43,13 @@ void send_file(asio::serial_port& serial, const payload& data, std::size_t max_s
     if (max_size == 0) max_size = data.size();
     else if (max_size > data.size()) max_size = data.size();
 
-    asio::write(serial, asio::buffer(data), [=](const asio::error_code& ec, std::size_t n)
-    {
+    asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, std::size_t n){
         auto pct = n * 100 / max_size;
         message(n, "%... ", std::string(5 + ((n < 10) ? 1 : (n < 100) ? 2 : 3), '\b'));
         return max_size - n;
     });
+
+    drain(serial);
     message("100%... ");
 }
 
@@ -78,15 +79,19 @@ void detect_target(asio::serial_port& serial)
         // tell Rabbit to set the /STATUS pin high
         doing("H");
         asio::write(serial, asio::buffer(status_hi, sizeof(status_hi) - 1));
-        sleep_for(100ms);
+        drain(serial);
+
         // check the /STATUS pin
+        sleep_for(100ms);
         if (dsr(serial)) throw std::runtime_error{"Target not responding"};
 
         // tell Rabbit to set the /STATUS pin low
         doing("L");
         asio::write(serial, asio::buffer(status_lo, sizeof(status_lo) - 1));
-        sleep_for(100ms);
+        drain(serial);
+
         // check the /STATUS pin
+        sleep_for(100ms);
         if (!dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
 }
