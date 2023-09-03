@@ -65,6 +65,7 @@ try
         detect_target(serial);
 
         send_stage1(serial, coldload);
+        send_stage2(serial, pilot);
         //
     }
 

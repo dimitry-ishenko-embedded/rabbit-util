@@ -10,6 +10,9 @@
 #include "serial.hpp"
 
 #include <chrono>
+#include <cstdint>
+#include <numeric> // std::accumulate
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 
@@ -51,6 +54,32 @@ void send_file(asio::serial_port& serial, const payload& data, std::size_t max_s
 
     drain(serial);
     message("100%... ");
+}
+
+auto addressof(auto& val) { return reinterpret_cast<std::uint8_t*>(&val); }
+
+#pragma pack(push, 1)
+struct pilot_head
+{
+    std::uint32_t addr;
+    std::uint16_t size;
+    std::uint8_t  csum;
+};
+#pragma pack(pop)
+
+auto to_hex(int val)
+{
+    std::ostringstream os;
+    os << std::hex << val;
+    return "0x" + std::move(os).str();
+}
+
+// https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
+auto fletcher16(const payload& data)
+{
+    std::uint16_t a = 0, b = 0;
+    for (auto c : data) { a = (a + c) % 255; b = (b + a) % 255; }
+    return b |= a << 8; // NB: Rabbit ordering
 }
 
 }
@@ -103,5 +132,39 @@ void send_stage1(asio::serial_port& serial, const payload& coldload)
         baud_rate(serial, 2400);
         send_file(serial, coldload);
         sleep_for(100ms);
+    });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void send_stage2(asio::serial_port& serial, const payload& pilot)
+{
+    do_("Sending secondary loader", [&]{
+        baud_rate(serial, 57600);
+        flush(serial, que_in);
+
+        pilot_head head;
+        head.addr = 0x4100;
+        head.size = pilot.size();
+        head.csum = std::accumulate(addressof(head), addressof(head) + sizeof(head) - sizeof(head.csum), 0);
+
+        doing("H");
+        asio::write(serial, asio::buffer( addressof(head), sizeof(head) ));
+        drain(serial);
+
+        doing("C");
+        std::uint8_t csr;
+        asio::read(serial, asio::buffer( addressof(csr), sizeof(csr) ));
+        if (head.csum != csr) throw std::runtime_error{
+            "Checksum error: ours=" + to_hex(head.csum) + " theirs=" + to_hex(csr)
+        };
+
+        send_file(serial, pilot);
+
+        doing("C");
+        std::uint16_t fsr;
+        asio::read(serial, asio::buffer( addressof(fsr), sizeof(fsr) ));
+        if (auto fsl = fletcher16(pilot); fsl != fsr) throw std::runtime_error{
+            "Checksum error: ours=" + to_hex(fsl) + " theirs=" + to_hex(fsr)
+        };
     });
 }
