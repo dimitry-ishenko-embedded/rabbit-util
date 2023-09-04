@@ -76,22 +76,22 @@ auto to_hex(int val)
     return "0x" + std::move(os).str();
 }
 
-auto checksum(const std::uint8_t* p, std::size_t s)
+auto checksum(const std::uint8_t* data, std::size_t size)
 {
-    std::uint8_t c = 0;
-    for (auto e = p + s; p != e; ++p) c += *p;
-    return c;
+    std::uint8_t csum = 0;
+    for (auto end = data + size; data != end; ++data) csum += *data;
+    return csum;
 }
 
 // https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(std::uint16_t c, const std::uint8_t* p, std::size_t s)
+auto fletcher16(std::uint16_t csum, const std::uint8_t* data, std::size_t size)
 {
     // NB: Rabbit ordering
-    std::uint16_t a = c >> 8, b = c & 0xff;
-    for (auto e = p + s; p != e; ++p) { a = (a + *p) % 255; b = (b + a) % 255; }
+    std::uint16_t a = csum >> 8, b = csum & 0xff;
+    for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
     return b |= (a << 8);
 }
-auto fletcher16(const std::uint8_t* p, std::size_t s) { return fletcher16(0, p, s); }
+auto fletcher16(const std::uint8_t* data, std::size_t size) { return fletcher16(0, data, size); }
 
 }
 
