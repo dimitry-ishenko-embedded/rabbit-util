@@ -84,12 +84,14 @@ auto checksum(const std::uint8_t* p, std::size_t s)
 }
 
 // https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(const std::uint8_t* p, std::size_t s)
+auto fletcher16(std::uint16_t c, const std::uint8_t* p, std::size_t s)
 {
-    std::uint16_t a = 0, b = 0;
+    // NB: Rabbit ordering
+    std::uint16_t a = c >> 8, b = c & 0xff;
     for (auto e = p + s; p != e; ++p) { a = (a + *p) % 255; b = (b + a) % 255; }
-    return b |= a << 8; // NB: Rabbit ordering
+    return b |= (a << 8);
 }
+auto fletcher16(const std::uint8_t* p, std::size_t s) { return fletcher16(0, p, s); }
 
 }
 
