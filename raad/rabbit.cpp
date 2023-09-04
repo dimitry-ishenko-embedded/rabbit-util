@@ -63,7 +63,7 @@ auto addressof(auto& val) { return reinterpret_cast<std::uint8_t*>(&val); }
 #pragma pack(push, 1)
 struct pilot_head
 {
-    std::uint32_t addr;
+    std::uint32_t address;
     std::uint16_t size;
     std::uint8_t  csum;
 };
@@ -166,7 +166,7 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
         flush(serial, que_in);
 
         pilot_head head;
-        head.addr = 0x4000;
+        head.address = 0x4000;
         head.size = pilot.size();
         head.csum = checksum(addressof(head), sizeof(head) - sizeof(head.csum));
 
