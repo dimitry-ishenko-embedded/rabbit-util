@@ -121,7 +121,7 @@ void detect_target(asio::serial_port& serial)
         asio::write(serial, asio::buffer(status_hi, size(status_hi)));
         drain(serial);
 
-        // check the /STATUS pin
+        // check the /STATUS pin (inverted)
         sleep_for(100ms);
         if (dsr(serial)) throw std::runtime_error{"Target not responding"};
 
@@ -130,7 +130,7 @@ void detect_target(asio::serial_port& serial)
         asio::write(serial, asio::buffer(status_lo, size(status_lo)));
         drain(serial);
 
-        // check the /STATUS pin
+        // check the /STATUS pin (inverted)
         sleep_for(100ms);
         if (!dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
@@ -154,7 +154,7 @@ void send_stage1(asio::serial_port& serial, const payload& coldload)
         asio::write(serial, asio::buffer(start_pgm, size(start_pgm)));
         drain(serial);
 
-        // check the /STATUS pin
+        // check the /STATUS pin (inverted)
         sleep_for(100ms);
         if (dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
