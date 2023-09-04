@@ -41,6 +41,9 @@ constexpr char status_hi[] = "\x80\x0e\x30";
 // ioi ld (GOCR), 0x20
 constexpr char status_lo[] = "\x80\x0e\x20";
 
+// ioi ld (SPCR), 0x80
+constexpr char start_pgm[] = "\x80\x24\x80";
+
 void send_file(asio::serial_port& serial, const payload& data, std::size_t max_size = 0)
 {
     if (max_size == 0) max_size = data.size();
@@ -130,8 +133,22 @@ void send_stage1(asio::serial_port& serial, const payload& coldload)
 {
     do_("Sending initial loader", [&]{
         baud_rate(serial, 2400);
-        send_file(serial, coldload);
+
+        // send loader without the final triplet (see bootstrapping.md)
+        send_file(serial, coldload, coldload.size() - 3);
+
+        // tell Rabbit to set the /STATUS pin high
+        doing("H");
+        asio::write(serial, asio::buffer(status_hi, size(status_hi)));
+
+        // send the final triplet
+        doing("F");
+        asio::write(serial, asio::buffer(start_pgm, size(start_pgm)));
+        drain(serial);
+
+        // check the /STATUS pin
         sleep_for(100ms);
+        if (dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
 }
 
@@ -143,7 +160,7 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
         flush(serial, que_in);
 
         pilot_head head;
-        head.addr = 0x4100;
+        head.addr = 0x4000;
         head.size = pilot.size();
         head.csum = std::accumulate(addressof(head), addressof(head) + sizeof(head) - sizeof(head.csum), 0);
 
