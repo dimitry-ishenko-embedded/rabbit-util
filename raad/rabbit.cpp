@@ -11,7 +11,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <numeric> // std::accumulate
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -77,11 +76,18 @@ auto to_hex(int val)
     return "0x" + std::move(os).str();
 }
 
+auto checksum(const std::uint8_t* p, std::size_t s)
+{
+    std::uint8_t c = 0;
+    for (auto e = p + s; p != e; ++p) c += *p;
+    return c;
+}
+
 // https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(const payload& data)
+auto fletcher16(const std::uint8_t* p, std::size_t s)
 {
     std::uint16_t a = 0, b = 0;
-    for (auto c : data) { a = (a + c) % 255; b = (b + a) % 255; }
+    for (auto e = p + s; p != e; ++p) { a = (a + *p) % 255; b = (b + a) % 255; }
     return b |= a << 8; // NB: Rabbit ordering
 }
 
@@ -162,7 +168,7 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
         pilot_head head;
         head.addr = 0x4000;
         head.size = pilot.size();
-        head.csum = std::accumulate(addressof(head), addressof(head) + sizeof(head) - sizeof(head.csum), 0);
+        head.csum = checksum(addressof(head), sizeof(head) - sizeof(head.csum));
 
         doing("H");
         asio::write(serial, asio::buffer(addressof(head), sizeof(head)));
@@ -176,7 +182,7 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
         };
 
         send_file(serial, pilot);
-        auto fsl = fletcher16(pilot);
+        auto fsl = fletcher16(pilot.data(), pilot.size());
 
         doing("C");
         std::uint16_t fsr;
