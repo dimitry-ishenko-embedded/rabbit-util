@@ -165,23 +165,24 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
         head.csum = std::accumulate(addressof(head), addressof(head) + sizeof(head) - sizeof(head.csum), 0);
 
         doing("H");
-        asio::write(serial, asio::buffer( addressof(head), sizeof(head) ));
+        asio::write(serial, asio::buffer(addressof(head), sizeof(head)));
         drain(serial);
 
         doing("C");
         std::uint8_t csr;
-        asio::read(serial, asio::buffer( addressof(csr), sizeof(csr) ));
+        asio::read(serial, asio::buffer(addressof(csr), sizeof(csr)));
         if (head.csum != csr) throw std::runtime_error{
-            "Checksum error: ours=" + to_hex(head.csum) + " theirs=" + to_hex(csr)
+            "Checksum error: local=" + to_hex(head.csum) + " remote=" + to_hex(csr)
         };
 
         send_file(serial, pilot);
+        auto fsl = fletcher16(pilot);
 
         doing("C");
         std::uint16_t fsr;
-        asio::read(serial, asio::buffer( addressof(fsr), sizeof(fsr) ));
-        if (auto fsl = fletcher16(pilot); fsl != fsr) throw std::runtime_error{
-            "Checksum error: ours=" + to_hex(fsl) + " theirs=" + to_hex(fsr)
+        asio::read(serial, asio::buffer(addressof(fsr), sizeof(fsr)));
+        if (fsl != fsr) throw std::runtime_error{
+            "Checksum error: local=" + to_hex(fsl) + " remote=" + to_hex(fsr)
         };
     });
 }
