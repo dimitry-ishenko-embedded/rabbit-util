@@ -20,8 +20,8 @@ namespace fs = std::filesystem;
 constexpr size_t max_size = 32768;
 
 /*
- *	These are the first few bytes of the coldload sequence.
- *	They are used to set up some of the configuration registers.
+ * These are the first few bytes of the coldload sequence.
+ * They are used to set up some of the configuration registers.
  */
 constexpr byte prologue[] {
     "\x80\x00\x08"  // GCSR: no periodic int, main osc no div
