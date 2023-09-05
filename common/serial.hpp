@@ -8,19 +8,19 @@
 #ifndef SERIAL_HPP
 #define SERIAL_HPP
 
+#include "types.hpp"
+
 #include <asio.hpp>
+#include <string>
 
-enum { lo = false, hi = true };
+////////////////////////////////////////////////////////////////////////////////
+asio::serial_port open_serial(asio::io_context&, const std::string& name);
+void send_data(asio::serial_port&, const payload&, size_t max_size = 0);
 
-inline void baud_rate(asio::serial_port& serial, unsigned rate)
-{
-    serial.set_option(asio::serial_port::baud_rate{rate});
-}
-inline void baud_rate(asio::serial_port& serial, unsigned rate, asio::error_code& ec)
-{
-    serial.set_option(asio::serial_port::baud_rate{rate}, ec);
-}
+void baud_rate(asio::serial_port&, unsigned);
+void baud_rate(asio::serial_port&, unsigned, asio::error_code&);
 
+////////////////////////////////////////////////////////////////////////////////
 bool dsr(asio::serial_port&);
 bool dsr(asio::serial_port&, asio::error_code&);
 

@@ -13,14 +13,6 @@
 #include <stdexcept>
 
 ////////////////////////////////////////////////////////////////////////////////
-asio::serial_port open_serial(asio::io_context& ctx, const std::string& name)
-{
-    asio::serial_port serial{ctx};
-    do_("Opening serial port ", name, [&]{ serial = asio::serial_port{ctx, name}; });
-    return serial;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 namespace
 {
 
@@ -36,21 +28,6 @@ constexpr byte status_lo[] = "\x80\x0e\x20";
 
 // ioi ld (SPCR), 0x80
 constexpr byte start_pgm[] = "\x80\x24\x80";
-
-void send_file(asio::serial_port& serial, const payload& data, size_t max_size = 0)
-{
-    if (max_size == 0) max_size = data.size();
-    else if (max_size > data.size()) max_size = data.size();
-
-    asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, size_t n){
-        auto pc = n * 100 / max_size;
-        message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
-        return max_size - n;
-    });
-
-    drain(serial);
-    message("100%... ");
-}
 
 #pragma pack(push, 1)
 struct pilot_head
@@ -111,7 +88,7 @@ void send_coldload(asio::serial_port& serial, const payload& data)
         baud_rate(serial, 2400);
 
         // send loader without the final triplet (see bootstrapping.md)
-        send_file(serial, data, data.size() - 3);
+        send_data(serial, data, data.size() - 3);
 
         // tell Rabbit to set the /STATUS pin high
         doing("H");
@@ -151,7 +128,7 @@ void send_pilot(asio::serial_port& serial, const payload& data)
             "Checksum error: local=" + to_hex(head.check) + " remote=" + to_hex(check)
         };
 
-        send_file(serial, data);
+        send_data(serial, data);
         auto fsl = fletcher16(data.data(), data.size());
 
         doing("C");

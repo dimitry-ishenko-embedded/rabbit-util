@@ -28,6 +28,8 @@ using std::size_t;
 
 using payload = std::vector<byte>;
 
+enum { lo = false, hi = true };
+
 ////////////////////////////////////////////////////////////////////////////////
 auto addressof(auto& val) { return reinterpret_cast<byte*>(&val); }
 

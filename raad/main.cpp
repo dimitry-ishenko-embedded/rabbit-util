@@ -8,6 +8,7 @@
 #include "file.hpp"
 #include "pgm/args.hpp"
 #include "rabbit.hpp"
+#include "serial.hpp"
 
 #include <asio.hpp>
 #include <exception>

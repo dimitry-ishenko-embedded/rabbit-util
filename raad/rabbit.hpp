@@ -8,13 +8,8 @@
 #ifndef RABBIT_HPP
 #define RABBIT_HPP
 
-#include "file.hpp"
-
+#include "types.hpp"
 #include <asio.hpp>
-#include <string>
-
-////////////////////////////////////////////////////////////////////////////////
-asio::serial_port open_serial(asio::io_context&, const std::string& name);
 
 void reset_target(asio::serial_port&);
 void detect_target(asio::serial_port&);

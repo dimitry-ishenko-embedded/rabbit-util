@@ -5,6 +5,7 @@
 // Distributed under the GNU GPL license. See the LICENSE.md file for details.
 
 ////////////////////////////////////////////////////////////////////////////////
+#include "message.hpp"
 #include "serial.hpp"
 
 #if defined(__unix__) || defined(__APPLE__)
@@ -13,6 +14,39 @@
 #else
   #error "Unsupported platform"
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+asio::serial_port open_serial(asio::io_context& ctx, const std::string& name)
+{
+    asio::serial_port serial{ctx};
+    do_("Opening serial port ", name, [&]{ serial = asio::serial_port{ctx, name}; });
+    return serial;
+}
+
+void send_data(asio::serial_port& serial, const payload& data, size_t max_size)
+{
+    if (max_size == 0) max_size = data.size();
+    else if (max_size > data.size()) max_size = data.size();
+
+    asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, size_t n){
+        auto pc = n * 100 / max_size;
+        message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
+        return max_size - n;
+    });
+
+    drain(serial);
+    message("100%... ");
+}
+
+void baud_rate(asio::serial_port& serial, unsigned rate)
+{
+    serial.set_option(asio::serial_port::baud_rate{rate});
+}
+
+void baud_rate(asio::serial_port& serial, unsigned rate, asio::error_code& ec)
+{
+    serial.set_option(asio::serial_port::baud_rate{rate}, ec);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace
