@@ -11,6 +11,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
