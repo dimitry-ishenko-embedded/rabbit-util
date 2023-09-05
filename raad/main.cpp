@@ -64,8 +64,8 @@ try
         reset_target(serial);
         detect_target(serial);
 
-        send_stage1(serial, coldload);
-        send_stage2(serial, pilot);
+        send_coldload(serial, coldload);
+        send_pilot(serial, pilot);
         //
     }
 

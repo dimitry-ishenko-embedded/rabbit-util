@@ -137,13 +137,13 @@ void detect_target(asio::serial_port& serial)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void send_stage1(asio::serial_port& serial, const payload& coldload)
+void send_coldload(asio::serial_port& serial, const payload& data)
 {
     do_("Sending initial loader", [&]{
         baud_rate(serial, 2400);
 
         // send loader without the final triplet (see bootstrapping.md)
-        send_file(serial, coldload, coldload.size() - 3);
+        send_file(serial, data, data.size() - 3);
 
         // tell Rabbit to set the /STATUS pin high
         doing("H");
@@ -161,7 +161,7 @@ void send_stage1(asio::serial_port& serial, const payload& coldload)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void send_stage2(asio::serial_port& serial, const payload& pilot)
+void send_pilot(asio::serial_port& serial, const payload& data)
 {
     do_("Sending secondary loader", [&]{
         baud_rate(serial, 57600);
@@ -169,7 +169,7 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
 
         pilot_head head;
         head.address = 0x4000;
-        head.size = pilot.size();
+        head.size = data.size();
         head.csum = checksum(addressof(head), sizeof(head) - sizeof(head.csum));
 
         doing("H");
@@ -183,8 +183,8 @@ void send_stage2(asio::serial_port& serial, const payload& pilot)
             "Checksum error: local=" + to_hex(head.csum) + " remote=" + to_hex(csr)
         };
 
-        send_file(serial, pilot);
-        auto fsl = fletcher16(pilot.data(), pilot.size());
+        send_file(serial, data);
+        auto fsl = fletcher16(data.data(), data.size());
 
         doing("C");
         std::uint16_t fsr;

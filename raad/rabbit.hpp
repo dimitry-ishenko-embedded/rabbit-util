@@ -19,8 +19,8 @@ asio::serial_port open_serial(asio::io_context&, const std::string& name);
 void reset_target(asio::serial_port&);
 void detect_target(asio::serial_port&);
 
-void send_stage1(asio::serial_port&, const payload&);
-void send_stage2(asio::serial_port&, const payload&);
+void send_coldload(asio::serial_port&, const payload&);
+void send_pilot(asio::serial_port&, const payload&);
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif
