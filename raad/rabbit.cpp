@@ -66,7 +66,7 @@ struct pilot_head
 {
     dword address;
     word size;
-    byte csum;
+    byte check;
 };
 #pragma pack(pop)
 
@@ -79,16 +79,16 @@ auto to_hex(int val)
 
 auto checksum(const byte* data, size_t size)
 {
-    byte csum = 0;
-    for (auto end = data + size; data != end; ++data) csum += *data;
-    return csum;
+    byte check = 0;
+    for (auto end = data + size; data != end; ++data) check += *data;
+    return check;
 }
 
 // https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(word csum, const byte* data, size_t size)
+auto fletcher16(word init, const byte* data, size_t size)
 {
     // NB: Rabbit ordering
-    word a = csum >> 8, b = csum & 0xff;
+    word a = init >> 8, b = init & 0xff;
     for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
     return b |= (a << 8);
 }
@@ -171,17 +171,17 @@ void send_pilot(asio::serial_port& serial, const payload& data)
         pilot_head head;
         head.address = 0x4000;
         head.size = data.size();
-        head.csum = checksum(addressof(head), sizeof(head) - sizeof(head.csum));
+        head.check = checksum(addressof(head), sizeof(head) - sizeof(head.check));
 
         doing("H");
         asio::write(serial, asio::buffer(addressof(head), sizeof(head)));
         drain(serial);
 
         doing("C");
-        byte csr;
-        asio::read(serial, asio::buffer(addressof(csr), sizeof(csr)));
-        if (head.csum != csr) throw std::runtime_error{
-            "Checksum error: local=" + to_hex(head.csum) + " remote=" + to_hex(csr)
+        byte check;
+        asio::read(serial, asio::buffer(addressof(check), sizeof(check)));
+        if (head.check != check) throw std::runtime_error{
+            "Checksum error: local=" + to_hex(head.check) + " remote=" + to_hex(check)
         };
 
         send_file(serial, data);
