@@ -18,10 +18,15 @@
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
-using payload = std::vector<std::uint8_t>;
+using byte = std::uint8_t;
+using word = std::uint16_t;
+using dword = std::uint32_t;
+using std::size_t;
 
-template<std::size_t N>
-constexpr auto size(const char (&)[N]) { return N - 1; }
+using payload = std::vector<byte>;
+
+template<size_t N>
+constexpr auto size(const byte (&)[N]) { return N - 1; }
 
 inline auto to_human(unsigned n)
 {
@@ -44,7 +49,7 @@ inline auto open_file(asio::io_context& ctx, const std::string& path, flags flag
     return file;
 }
 
-inline auto read_file(asio::io_context& ctx, const std::string& path, std::size_t max_size = 0)
+inline auto read_file(asio::io_context& ctx, const std::string& path, size_t max_size = 0)
 {
     auto file = open_file(ctx, path, flags::read_only);
 

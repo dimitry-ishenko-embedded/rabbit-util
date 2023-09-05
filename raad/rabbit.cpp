@@ -32,23 +32,23 @@ namespace
 
 // ioi ld (WDTTR), 0x51
 // ioi ld (WDTTR), 0x54
-constexpr char disable_wd[] = "\x80\x09\x51\x80\x09\x54";
+constexpr byte disable_wd[] = "\x80\x09\x51\x80\x09\x54";
 
 // ioi ld (GOCR), 0x30
-constexpr char status_hi[] = "\x80\x0e\x30";
+constexpr byte status_hi[] = "\x80\x0e\x30";
 
 // ioi ld (GOCR), 0x20
-constexpr char status_lo[] = "\x80\x0e\x20";
+constexpr byte status_lo[] = "\x80\x0e\x20";
 
 // ioi ld (SPCR), 0x80
-constexpr char start_pgm[] = "\x80\x24\x80";
+constexpr byte start_pgm[] = "\x80\x24\x80";
 
-void send_file(asio::serial_port& serial, const payload& data, std::size_t max_size = 0)
+void send_file(asio::serial_port& serial, const payload& data, size_t max_size = 0)
 {
     if (max_size == 0) max_size = data.size();
     else if (max_size > data.size()) max_size = data.size();
 
-    asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, std::size_t n){
+    asio::write(serial, asio::buffer(data), [&](const asio::error_code& ec, size_t n){
         auto pc = n * 100 / max_size;
         message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
         return max_size - n;
@@ -58,14 +58,14 @@ void send_file(asio::serial_port& serial, const payload& data, std::size_t max_s
     message("100%... ");
 }
 
-auto addressof(auto& val) { return reinterpret_cast<std::uint8_t*>(&val); }
+auto addressof(auto& val) { return reinterpret_cast<byte*>(&val); }
 
 #pragma pack(push, 1)
 struct pilot_head
 {
-    std::uint32_t address;
-    std::uint16_t size;
-    std::uint8_t  csum;
+    dword address;
+    word size;
+    byte csum;
 };
 #pragma pack(pop)
 
@@ -76,22 +76,22 @@ auto to_hex(int val)
     return "0x" + std::move(os).str();
 }
 
-auto checksum(const std::uint8_t* data, std::size_t size)
+auto checksum(const byte* data, size_t size)
 {
-    std::uint8_t csum = 0;
+    byte csum = 0;
     for (auto end = data + size; data != end; ++data) csum += *data;
     return csum;
 }
 
 // https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(std::uint16_t csum, const std::uint8_t* data, std::size_t size)
+auto fletcher16(word csum, const byte* data, size_t size)
 {
     // NB: Rabbit ordering
-    std::uint16_t a = csum >> 8, b = csum & 0xff;
+    word a = csum >> 8, b = csum & 0xff;
     for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
     return b |= (a << 8);
 }
-auto fletcher16(const std::uint8_t* data, std::size_t size) { return fletcher16(0, data, size); }
+auto fletcher16(const byte* data, size_t size) { return fletcher16(0, data, size); }
 
 }
 
@@ -177,7 +177,7 @@ void send_pilot(asio::serial_port& serial, const payload& data)
         drain(serial);
 
         doing("C");
-        std::uint8_t csr;
+        byte csr;
         asio::read(serial, asio::buffer(addressof(csr), sizeof(csr)));
         if (head.csum != csr) throw std::runtime_error{
             "Checksum error: local=" + to_hex(head.csum) + " remote=" + to_hex(csr)
@@ -187,7 +187,7 @@ void send_pilot(asio::serial_port& serial, const payload& data)
         auto fsl = fletcher16(data.data(), data.size());
 
         doing("C");
-        std::uint16_t fsr;
+        word fsr;
         asio::read(serial, asio::buffer(addressof(fsr), sizeof(fsr)));
         if (fsl != fsr) throw std::runtime_error{
             "Checksum error: local=" + to_hex(fsl) + " remote=" + to_hex(fsr)

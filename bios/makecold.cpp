@@ -17,13 +17,13 @@
 
 namespace fs = std::filesystem;
 
-constexpr std::size_t max_size = 32768;
+constexpr size_t max_size = 32768;
 
 /*
  *	These are the first few bytes of the coldload sequence.
  *	They are used to set up some of the configuration registers.
  */
-constexpr char prologue[] {
+constexpr byte prologue[] {
     "\x80\x00\x08"  // GCSR: no periodic int, main osc no div
     "\x80\x10\x00"  // MMIDR: normal operation
     "\x80\x14\x45"  // MB0CR: 2 ws, /OE1, /WE1, /CS1 active
@@ -34,7 +34,7 @@ constexpr char prologue[] {
     "\x80\x11\x74"  // STACKSEG
     "\x80\x12\x3a"  // DATASEG
 };
-constexpr char epilogue[] = "\x80\x24\x80";
+constexpr byte epilogue[] = "\x80\x24\x80";
 
 int main(int argc, char* argv[])
 try
@@ -59,7 +59,7 @@ try
 
     payload data_out(data_in.size() * 3);
     do_("Converting input data", [&]{
-        std::size_t n = 0;
+        size_t n = 0;
         for (auto in = data_in.begin(), out = data_out.begin(); in != data_in.end(); ++in, ++out, ++n) {
             *out = n >> 8; *++out = n; *++out = *in;
         }
