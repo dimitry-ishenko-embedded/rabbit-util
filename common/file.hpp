@@ -8,62 +8,13 @@
 #ifndef FILE_HPP
 #define FILE_HPP
 
-#include "message.hpp"
-
+#include "types.hpp"
 #include <asio.hpp>
-#include <cmath>
-#include <cstdint>
-#include <sstream>
-#include <string>
-#include <vector>
 
-////////////////////////////////////////////////////////////////////////////////
-using byte = std::uint8_t;
-using word = std::uint16_t;
-using dword = std::uint32_t;
-using std::size_t;
-
-using payload = std::vector<byte>;
-
-template<size_t N>
-constexpr auto size(const byte (&)[N]) { return N - 1; }
-
-inline auto to_human(unsigned n)
-{
-    std::ostringstream os;
-
-    if (n < 1000) os << n << " bytes";
-    else if (n < 999950) os << std::round(n / 100.) / 10. << " KB";
-    else os << std::round(n / 100000.) / 10. << " MB";
-
-    return std::move(os).str();
-}
-
-////////////////////////////////////////////////////////////////////////////////
 using flags = asio::stream_file::flags;
 
-inline auto open_file(asio::io_context& ctx, const std::string& path, flags flags)
-{
-    asio::stream_file file{ctx};
-    do_("Opening file ", path, [&]{ file.open(path, flags); });
-    return file;
-}
-
-inline auto read_file(asio::io_context& ctx, const std::string& path, size_t max_size = 0)
-{
-    auto file = open_file(ctx, path, flags::read_only);
-
-    payload data;
-    do_("Reading data", [&]{
-        if (max_size == 0) max_size = file.size();
-        else if (max_size > file.size()) max_size = file.size();
-
-        doing(to_human(max_size));
-        asio::read(file, asio::dynamic_buffer(data, max_size));
-    });
-
-    return data;
-}
+asio::stream_file open_file(asio::io_context&, const std::string& path, flags);
+payload read_file(asio::io_context&, const std::string& path, size_t max_size = 0);
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif

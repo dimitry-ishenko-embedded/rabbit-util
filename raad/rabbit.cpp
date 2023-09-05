@@ -8,16 +8,9 @@
 #include "message.hpp"
 #include "rabbit.hpp"
 #include "serial.hpp"
+#include "types.hpp"
 
-#include <chrono>
-#include <cstdint>
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
-#include <thread>
-
-using namespace std::chrono_literals;
-using namespace std::this_thread;
 
 ////////////////////////////////////////////////////////////////////////////////
 asio::serial_port open_serial(asio::io_context& ctx, const std::string& name)
@@ -59,8 +52,6 @@ void send_file(asio::serial_port& serial, const payload& data, size_t max_size =
     message("100%... ");
 }
 
-auto addressof(auto& val) { return reinterpret_cast<byte*>(&val); }
-
 #pragma pack(push, 1)
 struct pilot_head
 {
@@ -69,30 +60,6 @@ struct pilot_head
     byte check;
 };
 #pragma pack(pop)
-
-auto to_hex(int val)
-{
-    std::ostringstream os;
-    os << std::hex << val;
-    return "0x" + std::move(os).str();
-}
-
-auto checksum(const byte* data, size_t size)
-{
-    byte check = 0;
-    for (auto end = data + size; data != end; ++data) check += *data;
-    return check;
-}
-
-// https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-auto fletcher16(word init, const byte* data, size_t size)
-{
-    // NB: Rabbit ordering
-    word a = init >> 8, b = init & 0xff;
-    for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
-    return b |= (a << 8);
-}
-auto fletcher16(const byte* data, size_t size) { return fletcher16(0, data, size); }
 
 }
 

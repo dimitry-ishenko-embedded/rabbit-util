@@ -9,6 +9,7 @@
 
 #include "file.hpp"
 #include "message.hpp"
+#include "types.hpp"
 
 #include <asio.hpp>
 #include <exception>
@@ -50,7 +51,7 @@ try
 
     asio::io_context ctx;
 
-    payload data_in = read_file(ctx, path_in, max_size);
+    auto data_in = read_file(ctx, path_in, max_size);
     if (fs::file_size(path_in) > data_in.size()) {
         message("WARNING: stopped after reading ", data_in.size(), " bytes from input\n");
     }
