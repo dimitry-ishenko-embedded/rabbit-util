@@ -12,8 +12,14 @@
 
 enum { lo = false, hi = true };
 
-void baud_rate(asio::serial_port&, unsigned);
-void baud_rate(asio::serial_port&, unsigned, asio::error_code&);
+inline void baud_rate(asio::serial_port& serial, unsigned rate)
+{
+    serial.set_option(asio::serial_port::baud_rate{rate});
+}
+inline void baud_rate(asio::serial_port& serial, unsigned rate, asio::error_code& ec)
+{
+    serial.set_option(asio::serial_port::baud_rate{rate}, ec);
+}
 
 bool dsr(asio::serial_port&);
 bool dsr(asio::serial_port&, asio::error_code&);

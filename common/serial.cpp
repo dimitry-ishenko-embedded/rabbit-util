@@ -15,17 +15,6 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-void baud_rate(asio::serial_port& serial, unsigned b)
-{
-    serial.set_option(asio::serial_port::baud_rate{b});
-}
-
-void baud_rate(asio::serial_port& serial, unsigned b, asio::error_code& ec)
-{
-    serial.set_option(asio::serial_port::baud_rate{b}, ec);
-}
-
-////////////////////////////////////////////////////////////////////////////////
 namespace
 {
 
