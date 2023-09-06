@@ -1,7 +1,7 @@
 ####################
 ## makecold
 add_executable(makecold EXCLUDE_FROM_ALL makecold.cpp)
-target_link_libraries(makecold common uring)
+target_link_libraries(makecold common)
 
 ## coldload.bin
 add_custom_command(OUTPUT coldload.ihx
