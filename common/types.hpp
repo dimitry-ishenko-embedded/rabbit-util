@@ -28,7 +28,8 @@ using payload = std::vector<byte>;
 enum { lo = false, hi = true };
 
 ////////////////////////////////////////////////////////////////////////////////
-auto addressof(auto& val) { return reinterpret_cast<byte*>(&val); }
+auto addressof(auto& data) { return reinterpret_cast<byte*>(&data); }
+auto addressof(auto const& data) { return reinterpret_cast<const byte*>(&data); }
 
 template<size_t N>
 constexpr auto size(const byte (&)[N]) { return N - 1; }
