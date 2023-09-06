@@ -5,8 +5,8 @@
 // Distributed under the GNU GPL license. See the LICENSE.md file for details.
 
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef RABBIT_HPP
-#define RABBIT_HPP
+#ifndef RAAD_HPP
+#define RAAD_HPP
 
 #include "types.hpp"
 #include <asio.hpp>

@@ -1,7 +1,7 @@
 ####################
 add_executable(raad
     main.cpp
-    rabbit.cpp rabbit.hpp
+    raad.cpp raad.hpp
 )
 target_compile_definitions(raad
     PRIVATE BIOS_DIR="${BIOS_INSTALL_FULL_DIR}"

@@ -6,6 +6,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #include "message.hpp"
+#include "raad.hpp"
 #include "rabbit.hpp"
 #include "serial.hpp"
 #include "types.hpp"
@@ -28,15 +29,6 @@ constexpr byte status_lo[] = "\x80\x0e\x20";
 
 // ioi ld (SPCR), 0x80
 constexpr byte start_pgm[] = "\x80\x24\x80";
-
-#pragma pack(push, 1)
-struct pilot_head
-{
-    dword address;
-    word size;
-    byte check;
-};
-#pragma pack(pop)
 
 }
 
