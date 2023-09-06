@@ -2,6 +2,7 @@
 add_library(common OBJECT
     file.cpp file.hpp
     message.hpp
+    rabbit.hpp
     serial.cpp serial.hpp
     types.hpp
 )
