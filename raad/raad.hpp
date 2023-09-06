@@ -16,6 +16,7 @@ void detect_target(asio::serial_port&);
 
 void send_coldload(asio::serial_port&, const payload&);
 void send_pilot(asio::serial_port&, const payload&);
+void send_program(asio::serial_port&, const payload&);
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif
