@@ -9,10 +9,7 @@
 #define TYPES_HPP
 
 #include <chrono>
-#include <cmath>
 #include <cstdint>
-#include <iomanip>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -36,40 +33,14 @@ auto addressof(auto& val) { return reinterpret_cast<byte*>(&val); }
 template<size_t N>
 constexpr auto size(const byte (&)[N]) { return N - 1; }
 
-inline auto to_human(unsigned n)
-{
-    std::ostringstream os;
-
-    if (n < 1000) os << n << " bytes";
-    else if (n < 999950) os << std::round(n / 100.) / 10. << " KB";
-    else os << std::round(n / 100000.) / 10. << " MB";
-
-    return std::move(os).str();
-}
-
-inline auto to_hex(int val)
-{
-    std::ostringstream os;
-    os << std::hex << val;
-    return "0x" + std::move(os).str();
-}
+std::string to_human(unsigned);
+std::string to_hex(unsigned);
+std::string to_hex(const byte* data, size_t size);
+inline std::string to_hex(const payload& p) { return to_hex(p.data(), p.size()); }
 
 ////////////////////////////////////////////////////////////////////////////////
-inline auto checksum(const byte* data, size_t size)
-{
-    byte check = 0;
-    for (auto end = data + size; data != end; ++data) check += *data;
-    return check;
-}
-
-// https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-inline auto fletcher16(word init, const byte* data, size_t size)
-{
-    // NB: Rabbit ordering
-    word a = init >> 8, b = init & 0xff;
-    for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
-    return b |= (a << 8);
-}
+byte checksum(const byte* data, size_t size);
+word fletcher16(word init, const byte* data, size_t size);
 inline auto fletcher16(const byte* data, size_t size) { return fletcher16(0, data, size); }
 
 ////////////////////////////////////////////////////////////////////////////////

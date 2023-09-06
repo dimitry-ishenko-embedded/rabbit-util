@@ -4,7 +4,7 @@ add_library(common OBJECT
     message.hpp
     rabbit.hpp
     serial.cpp serial.hpp
-    types.hpp
+    types.cpp types.hpp
 )
 target_compile_definitions(common PUBLIC ASIO_HAS_IO_URING ASIO_DISABLE_EPOLL)
 target_include_directories(common INTERFACE .)
