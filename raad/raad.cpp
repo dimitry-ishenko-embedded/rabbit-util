@@ -292,7 +292,7 @@ void send_program(asio::serial_port& serial, const payload& program)
     };
 
     auto& flash = it->second;
-    message("Flash ID: ", to_hex(probe.flash_id), " (", flash.chip, ")\n");
+    message("Flash ID: ", to_hex(probe.flash_id), " (", flash.name, ")\n");
     message("  sec_size   = ", flash.param.sec_size,   '\n');
     message("  num_sec    = ", flash.param.num_sec,    '\n');
     message("  flash_size = ", flash.param.flash_size, '\n');

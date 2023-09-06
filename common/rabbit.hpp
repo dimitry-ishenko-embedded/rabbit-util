@@ -23,19 +23,19 @@ constexpr dword max_baud_rate = 115200;
 
 enum : byte
 {
-    TC_VERSION              = 0x02, // the main version number
-    TC_TYPE_SYSTEM          = 0x00, // system messages
+    TC_VERSION              = 0x02,
+    TC_TYPE_SYSTEM          = 0x00,
     TC_FRAMING_START        = 0x7e,
     TC_FRAMING_ESC          = 0x7d,
 
-    TC_SYSTEM_READ          = 0x02, // read memory
-    TC_SYSTEM_WRITE         = 0x03, // write memory
-    TC_SYSTEM_INFOPROBE     = 0x04, // probe configuration information
-    TC_SYSTEM_STARTBIOS     = 0x05, // signal the pilot BIOS to start running the real BIOS
-    TC_SYSTEM_SETBAUDRATE   = 0x06, // change the baud rate of the pilot BIOS
-    TC_SYSTEM_RELOCATE      = 0x08, // tell the pilot BIOS to relocate itself in the physical address space
-    TC_SYSTEM_ERASEFLASH    = 0x09, // tell the pilot BIOS to erase the entire flash
-    TC_SYSTEM_FLASHDATA     = 0x0a, // send the flash information to the pilot BIOS
+    TC_SYSTEM_READ          = 0x02,
+    TC_SYSTEM_WRITE         = 0x03,
+    TC_SYSTEM_INFOPROBE     = 0x04,
+    TC_SYSTEM_STARTBIOS     = 0x05,
+    TC_SYSTEM_SETBAUDRATE   = 0x06,
+    TC_SYSTEM_RELOCATE      = 0x08,
+    TC_SYSTEM_ERASEFLASH    = 0x09,
+    TC_SYSTEM_FLASHDATA     = 0x0a,
 
     TC_SUBTYPE_MASK         = 0x3f,
     TC_NAK                  = 0x40,
@@ -62,23 +62,23 @@ struct packet_head
 
 struct info_probe
 {
-    dword location;     // physical address of ID block
-    word  flash_id;     // 16-bit flash identifier
-    byte  ram_size;     // 8-bit code for the ram size
-    byte  div_19200;    // frequency divider for 19200 baud
-    dword cpu_id;       // identifiers about the CPU
+    dword _1;
+    word flash_id;
+    byte _2;
+    byte div_19200;
+    dword cpu_id;
     struct
     {
-        word unused1;
+        word _1;
         word prod_id;
-        byte unused2[159];
+        byte _2[159];
     }
     id_block;
 };
 
 struct flash_data
 {
-    const char* chip;
+    const char* name;
     struct
     {
         word sec_size;
