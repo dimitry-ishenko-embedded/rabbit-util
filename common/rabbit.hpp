@@ -79,10 +79,14 @@ struct info_probe
 struct flash_data
 {
     const char* chip;
-    word sector_size;
-    word num_sectors;
-    word flash_size;
-    word write_mode;
+    struct
+    {
+        word sec_size;
+        word num_sec;
+        word flash_size;
+        word write_mode;
+    }
+    param;
 };
 #pragma pack(pop)
 
