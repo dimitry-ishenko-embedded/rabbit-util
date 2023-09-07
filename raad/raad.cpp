@@ -216,7 +216,7 @@ auto recv_packet(asio::serial_port& serial, byte subtype)
                     "Checksum error: local=" + to_hex(fsl) + " remote=" + to_hex(*fsr)
                 };
 
-                return std::tuple{ is_ack, std::move(payload) };
+                return std::tuple{is_ack, std::move(payload)};
             }
             else /* warning? */;
         }
@@ -243,18 +243,14 @@ auto find_baud_rate(asio::serial_port& serial)
 auto recv_info(asio::serial_port& serial)
 {
     sleep_for(100ms);
-    for (;;)
-    {
-        send_packet(serial, TC_SYSTEM_INFOPROBE);
-        auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_INFOPROBE);
-        if (is_ack)
-        {
-            if (payload.size() != sizeof(info_probe))
-                throw std::runtime_error{"Received invalid data"};
-            return *(new (payload.data()) info_probe);
-        }
-        sleep_for(1000ms);
-    }
+    send_packet(serial, TC_SYSTEM_INFOPROBE);
+    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_INFOPROBE);
+
+    if (!is_ack) throw std::runtime_error{"Error getting info data"};
+    if (payload.size() != sizeof(info_probe)) throw std::runtime_error{"Invalid info data"};
+
+    auto info = new (payload.data()) info_probe;
+    return *info;
 }
 
 void send_flash_data(asio::serial_port& serial, const flash_data& flash)
@@ -262,6 +258,7 @@ void send_flash_data(asio::serial_port& serial, const flash_data& flash)
     sleep_for(100ms);
     send_packet(serial, TC_SYSTEM_FLASHDATA, addressof(flash.param), sizeof(flash.param));
     auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_FLASHDATA);
+
     if (!is_ack) throw std::runtime_error{"Error setting flash parameters"};
 }
 
@@ -287,9 +284,7 @@ void send_program(asio::serial_port& serial, const payload& program)
     message('\n');
 
     auto it = flash_info.find(probe.flash_id);
-    if (it == flash_info.end()) throw std::runtime_error{
-        "Unsupported flash type " + to_hex(probe.flash_id)
-    };
+    if (it == flash_info.end()) throw std::runtime_error{"Unsupported flash type " + to_hex(probe.flash_id)};
 
     auto& flash = it->second;
     message("Flash ID: ", to_hex(probe.flash_id), " (", flash.name, ")\n");
@@ -297,6 +292,6 @@ void send_program(asio::serial_port& serial, const payload& program)
     message("  num_sec    = ", flash.param.num_sec,    '\n');
     message("  flash_size = ", flash.param.flash_size, '\n');
     message("  write_mode = ", flash.param.write_mode, '\n');
-    
+
     do_("Sending flash data", [&]{ send_flash_data(serial, flash); });
 }
