@@ -40,6 +40,8 @@ enum : byte
     TC_SUBTYPE_MASK         = 0x3f,
     TC_NAK                  = 0x40,
     TC_ACK                  = 0x80,
+
+    TC_SYSWRITE_PHYSICAL    = 0x00,
 };
 
 #pragma pack(push, 1)
@@ -87,6 +89,16 @@ struct flash_data
         word write_mode;
     }
     param;
+};
+
+constexpr size_t write_size = 0x80;
+
+struct write_data
+{
+    byte type;
+    word data_size;
+    dword address;
+    byte data[write_size];
 };
 #pragma pack(pop)
 
