@@ -26,14 +26,14 @@ try
 
     pgm::args args
     {
-        { "-p", "name", pgm::req, "Serial port to use for upload."  },
-        { "-1", "path",           "Use custom initial loader."      },
-        { "-2", "path",           "Use custom secondary loader.\n"  },
+        { "-p", "--port", "name", pgm::req, "Serial port to use for upload."  },
+        { "-1", "--coldload", "path",       "Use custom initial loader."      },
+        { "-2", "--pilot", "path",          "Use custom secondary loader.\n"  },
 
-        { "-h", "--help",         "Show this help screen and exit." },
-        { "-v", "--version",      "Show version and exit."          },
+        { "-h", "--help",                   "Show this help screen and exit." },
+        { "-v", "--version",                "Show version and exit."          },
 
-        { "program.bin",          "Path to program to be uploaded." },
+        { "program.bin",                    "Path to program to be uploaded." },
     };
 
     std::exception_ptr ep;
