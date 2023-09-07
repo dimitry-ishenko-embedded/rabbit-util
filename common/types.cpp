@@ -45,11 +45,15 @@ byte checksum(const byte* data, size_t size)
     return check;
 }
 
-// https://en.wikipedia.org/wiki/Fletcher's_checksum#Implementation
-word fletcher16(word init, const byte* data, size_t size)
+// https://datatracker.ietf.org/doc/html/rfc1145
+word fletcher8(word init, const byte* data, size_t size)
 {
     // NB: Rabbit ordering
     word a = init >> 8, b = init & 0xff;
-    for (auto end = data + size; data != end; ++data) { a = (a + *data) % 255; b = (b + a) % 255; }
+    for (auto end = data + size; data != end; ++data)
+    {
+        a += *data; a = (a & 0xff) + (a >> 8);
+        b += a; b = (b & 0xff) + (b >> 8);
+    }
     return b |= (a << 8);
 }

@@ -122,7 +122,7 @@ void send_pilot(asio::serial_port& serial, const payload& data)
         };
 
         send_data(serial, data);
-        auto fsl = fletcher16(data.data(), data.size());
+        auto fsl = fletcher8(data.data(), data.size());
 
         doing("C");
         word fsr;
@@ -159,10 +159,10 @@ void send_packet(asio::serial_port& serial, byte subtype, const byte* data, size
     head.type       = TC_TYPE_SYSTEM;
     head.subtype    = subtype;
     head.data_size  = size;
-    head.check      = fletcher16(addressof(head), sizeof(head) - sizeof(head.check));
+    head.check      = fletcher8(addressof(head), sizeof(head) - sizeof(head.check));
 
-    auto check = fletcher16(addressof(head), sizeof(head));
-    check = fletcher16(check, data, size);
+    auto check = fletcher8(addressof(head), sizeof(head));
+    check = fletcher8(check, data, size);
 
     payload packet{ TC_FRAMING_START };
     add_escaped(packet, addressof(head), sizeof(head));
@@ -210,8 +210,8 @@ auto recv_packet(asio::serial_port& serial, byte subtype)
                 auto chunk = read_escaped(serial, sizeof(word));
                 auto fsr = new (chunk.data()) word;
 
-                auto fsl = fletcher16(addressof(*head), sizeof(*head));
-                fsl = fletcher16(fsl, payload.data(), payload.size());
+                auto fsl = fletcher8(addressof(*head), sizeof(*head));
+                fsl = fletcher8(fsl, payload.data(), payload.size());
 
                 if (fsl != *fsr) throw std::runtime_error{
                     "Checksum error: local=" + to_hex(fsl) + " remote=" + to_hex(*fsr)

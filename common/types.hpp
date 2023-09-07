@@ -41,8 +41,8 @@ inline std::string to_hex(const payload& p) { return to_hex(p.data(), p.size());
 
 ////////////////////////////////////////////////////////////////////////////////
 byte checksum(const byte* data, size_t size);
-word fletcher16(word init, const byte* data, size_t size);
-inline auto fletcher16(const byte* data, size_t size) { return fletcher16(0, data, size); }
+word fletcher8(word init, const byte* data, size_t size);
+inline auto fletcher8(const byte* data, size_t size) { return fletcher8(0, data, size); }
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif
