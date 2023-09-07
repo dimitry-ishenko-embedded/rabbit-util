@@ -67,7 +67,7 @@ try
 
         send_coldload(serial, coldload);
         send_pilot(serial, pilot);
-        //
+        send_program(serial, program);
     }
 
     return 0;

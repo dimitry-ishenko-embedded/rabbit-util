@@ -11,6 +11,7 @@
 #include "serial.hpp"
 #include "types.hpp"
 
+#include <algorithm> // std::copy
 #include <stdexcept>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -262,6 +263,29 @@ void send_flash_data(asio::serial_port& serial, const flash_data& flash)
     if (!is_ack) throw std::runtime_error{"Error setting flash parameters"};
 }
 
+void erase_flash(asio::serial_port& serial, dword program_size)
+{
+    sleep_for(100ms);
+    send_packet(serial, TC_SYSTEM_ERASEFLASH, addressof(program_size), sizeof(program_size));
+    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_ERASEFLASH);
+
+    if (!is_ack) throw std::runtime_error{"Error erasing flash"};
+}
+
+void send_chunk(asio::serial_port& serial, dword offset, const byte* data, size_t size)
+{
+    write_data chunk;
+    chunk.type = TC_SYSWRITE_PHYSICAL;
+    chunk.data_size = size;
+    chunk.address = 0x00080000 + offset;
+    std::copy(data, data + size, chunk.data);
+
+    send_packet(serial, TC_SYSTEM_WRITE, addressof(chunk), sizeof(chunk) - sizeof(chunk.data) + size);
+    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_WRITE);
+
+    if (!is_ack) throw std::runtime_error{"Error writing data chunk"};
+}
+
 }
 
 void send_program(asio::serial_port& serial, const payload& program)
@@ -294,4 +318,20 @@ void send_program(asio::serial_port& serial, const payload& program)
     message("  write_mode = ", flash.param.write_mode, '\n');
 
     do_("Sending flash data", [&]{ send_flash_data(serial, flash); });
+    do_("Erasing flash", [&]{ erase_flash(serial, program.size()); });
+
+    do_("Sending program", [&]{
+        sleep_for(100ms);
+
+        auto delta = write_size;
+        for (size_t offset = 0, size = program.size(); offset < size; offset += delta)
+        {
+            if (offset + delta > size) delta = size - offset;
+            send_chunk(serial, offset, program.data() + offset, delta);
+
+            auto pc = offset * 100 / size;
+            message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
+        }
+        message("100%... ");
+    });
 }
