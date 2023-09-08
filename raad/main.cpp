@@ -29,7 +29,8 @@ try
         { "-1", "--coldload", "path",       "Use custom initial loader."      },
         { "-2", "--pilot", "path",          "Use custom secondary loader."    },
         { "-p", "--port", "name", pgm::req, "Serial port to use for upload (required)." },
-        { "-r", "--run",                    "Launch program after upload.\n"  },
+        { "-r", "--run",                    "Launch program after upload."    },
+        { "-s", "--slow",                   "Limit max baud rate to 115200.\n"},
 
         { "-h", "--help",                   "Show this help screen and exit." },
         { "-v", "--version",                "Show version and exit."          },
@@ -65,6 +66,7 @@ try
 
         params params;
         params.run = !!args["-r"];
+        params.slow = !!args["-s"];
 
         reset_target(serial);
         detect_target(serial);

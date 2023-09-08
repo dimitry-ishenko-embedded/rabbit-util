@@ -225,10 +225,11 @@ auto recv_packet(asio::serial_port& serial, byte subtype)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-auto find_baud_rate(asio::serial_port& serial)
+auto find_baud_rate(asio::serial_port& serial, const params& params)
 {
     sleep_for(100ms);
-    for (auto rate = max_baud_rate; rate >= min_baud_rate; rate /= 2)
+    auto rate = params.slow ? (max_baud_rate / 4) : max_baud_rate;
+    for (; rate >= min_baud_rate; rate /= 2)
     {
         doing(rate);
         send_packet(serial, TC_SYSTEM_SETBAUDRATE, addressof(rate), sizeof(rate));
@@ -299,7 +300,7 @@ void run_program(asio::serial_port& serial, bool run_in_ram)
 void send_program(asio::serial_port& serial, const payload& program, const params& params)
 {
     unsigned rate;
-    do_("Negotiating baud rate", [&]{ rate = find_baud_rate(serial); });
+    do_("Negotiating baud rate", [&]{ rate = find_baud_rate(serial, params); });
     do_("Switching to ", rate, [&]{ baud_rate(serial, rate); });
 
     info_probe probe;

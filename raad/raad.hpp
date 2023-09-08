@@ -21,6 +21,7 @@ struct params
 {
     bool run = false;
     bool run_in_ram = false;
+    bool slow = false;
 };
 
 void send_program(asio::serial_port&, const payload&, const params&);
