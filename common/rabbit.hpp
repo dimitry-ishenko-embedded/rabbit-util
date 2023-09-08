@@ -42,6 +42,9 @@ enum : byte
     TC_ACK                  = 0x80,
 
     TC_SYSWRITE_PHYSICAL    = 0x00,
+
+    TC_STARTBIOS_RAM        = 0x01,
+    TC_STARTBIOS_FLASH      = 0x02,
 };
 
 #pragma pack(push, 1)
