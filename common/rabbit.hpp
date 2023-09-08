@@ -13,7 +13,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 constexpr dword min_baud_rate = 57600;
-constexpr dword max_baud_rate = 115200;
+constexpr dword max_baud_rate = 460800;
 
 // extracted from:
 // https://github.com/digidotcom/DCRabbit_9/tree/master/Lib/BIOSLIB/tc_defs.lib
