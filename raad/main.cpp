@@ -28,7 +28,8 @@ try
     {
         { "-p", "--port", "name", pgm::req, "Serial port to use for upload."  },
         { "-1", "--coldload", "path",       "Use custom initial loader."      },
-        { "-2", "--pilot", "path",          "Use custom secondary loader.\n"  },
+        { "-2", "--pilot", "path",          "Use custom secondary loader."    },
+        { "-r", "--run",                    "Launch program after upload.\n"  },
 
         { "-h", "--help",                   "Show this help screen and exit." },
         { "-v", "--version",                "Show version and exit."          },
@@ -62,12 +63,15 @@ try
         auto pilot    = read_file(ctx, args["-2"].value_or(def_pilot));
         auto program  = read_file(ctx, args["program.bin"].value());
 
+        params params;
+        params.run = args["-r"].count();
+
         reset_target(serial);
         detect_target(serial);
 
         send_coldload(serial, coldload);
         send_pilot(serial, pilot);
-        send_program(serial, program);
+        send_program(serial, program, params);
     }
 
     return 0;

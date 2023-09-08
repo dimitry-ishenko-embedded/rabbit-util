@@ -286,9 +286,17 @@ void send_chunk(asio::serial_port& serial, dword offset, const byte* data, size_
     if (!is_ack) throw std::runtime_error{"Error writing data chunk"};
 }
 
+void run_program(asio::serial_port& serial, bool run_in_ram)
+{
+    sleep_for(100ms);
+    byte run_in = run_in_ram ? TC_STARTBIOS_RAM : TC_STARTBIOS_FLASH;
+
+    send_packet(serial, TC_SYSTEM_STARTBIOS, addressof(run_in), sizeof(run_in));
 }
 
-void send_program(asio::serial_port& serial, const payload& program)
+}
+
+void send_program(asio::serial_port& serial, const payload& program, const params& params)
 {
     unsigned rate;
     do_("Negotiating baud rate", [&]{ rate = find_baud_rate(serial); });
@@ -334,4 +342,6 @@ void send_program(asio::serial_port& serial, const payload& program)
         }
         message("100%... ");
     });
+
+    if (params.run) do_("Launching program", [&](){ run_program(serial, params.run_in_ram); });
 }
