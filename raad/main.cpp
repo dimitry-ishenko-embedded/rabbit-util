@@ -26,9 +26,9 @@ try
 
     pgm::args args
     {
-        { "-p", "--port", "name", pgm::req, "Serial port to use for upload."  },
         { "-1", "--coldload", "path",       "Use custom initial loader."      },
         { "-2", "--pilot", "path",          "Use custom secondary loader."    },
+        { "-p", "--port", "name", pgm::req, "Serial port to use for upload (required)." },
         { "-r", "--run",                    "Launch program after upload.\n"  },
 
         { "-h", "--help",                   "Show this help screen and exit." },
@@ -64,7 +64,7 @@ try
         auto program  = read_file(ctx, args["program.bin"].value());
 
         params params;
-        params.run = args["-r"].count();
+        params.run = !!args["-r"];
 
         reset_target(serial);
         detect_target(serial);
