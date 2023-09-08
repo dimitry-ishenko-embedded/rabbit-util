@@ -8,3 +8,5 @@ target_compile_definitions(raad
     PRIVATE VERSION="${PROJECT_VERSION}"
 )
 target_link_libraries(raad common pgm_args)
+
+install(TARGETS raad DESTINATION ${CMAKE_INSTALL_BINDIR})
