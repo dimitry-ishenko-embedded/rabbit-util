@@ -4,17 +4,12 @@ add_executable(makecold EXCLUDE_FROM_ALL makecold.cpp)
 target_link_libraries(makecold common)
 
 ## coldload.bin
-add_custom_command(OUTPUT coldload.ihx
-    COMMAND sdcc -mr2k --no-std-crt0 --code-loc 0 ${CMAKE_CURRENT_SOURCE_DIR}/coldload.c
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/coldload.c
-)
-add_custom_command(OUTPUT coldload.obj
-    COMMAND objcopy -I ihex -O binary coldload.ihx coldload.obj
-    DEPENDS coldload.ihx
-)
 add_custom_command(OUTPUT coldload.bin
-    COMMAND ./makecold coldload.obj coldload.bin
-    DEPENDS coldload.obj makecold
+    COMMAND sdasrab -o coldload.rel ${CMAKE_CURRENT_SOURCE_DIR}/coldload.s
+    COMMAND sdld -i coldload.ihx coldload.rel
+    COMMAND sdobjcopy -I ihex -O binary coldload.ihx coldload.obj
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/makecold coldload.obj coldload.bin
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/coldload.s makecold
 )
 add_custom_target(coldload ALL DEPENDS coldload.bin)
 

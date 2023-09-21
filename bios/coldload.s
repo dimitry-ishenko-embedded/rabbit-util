@@ -1,30 +1,31 @@
-/*
-   Copyright (c) 2020 Digi International Inc.
+;
+; Copyright (c) 2023 Dimitry Ishenko <dimitry.ishenko (at) (gee) mail (dot) com>
+; Copyright (c) 2020 Digi International Inc.
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+    .module coldload
 
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-*/
+DIVADDR  .equ 0x3f00 ; time constant address
+FREQADRS .equ 0x3f02 ; frequency divisor address
 
-#define DIVADDR         0x3f00  // time constant address
-#define REGBIOSFLAG     0x3f01  // start bare BIOS flag address
-#define FREQADRS        0x3f02  // frequency divisor address
+DATASEG  .equ 0x0012
+PCFR     .equ 0x0055
+RTC0R    .equ 0x0002
+SACR     .equ 0x00c4
+SADR     .equ 0x00c0
+SASR     .equ 0x00c3
+SEGSIZE  .equ 0x0013
+TACSR    .equ 0x00a0
+TAT4R    .equ 0x00a9
+WDTCR    .equ 0x0008
+WDTTR    .equ 0x0009
 
-#define DATASEG         0x0012
-#define PCFR            0x0055
-#define RTC0R           0x0002
-#define SACR            0x00c4
-#define SADR            0x00c0
-#define SASR            0x00c3
-#define SEGSIZE         0x0013
-#define TACSR           0x00a0
-#define TAT4R           0x00a9
-#define WDTCR           0x0008
-#define WDTTR           0x0009
+    .area SYS (ABS)
+    .org 0
 
-void main() __naked
-{
-__asm
     ld sp, #(coldloadend + 0x200)   ; set up stack in low root segment
 
 ; Start of crystal frequency detection.
@@ -108,25 +109,25 @@ delay_loop:
     ioi
     ld (PCFR), a
 
-    call _get_byte
+    call get_byte
     ld e, a                         ; pilot BIOS begin physical address LSB
 
-    call _get_byte
+    call get_byte
     ld d, a                         ; pilot BIOS begin physical address LSmidB
 
-    call _get_byte
+    call get_byte
     ld c, a                         ; pilot BIOS begin physical address MSmidB
 
-    call _get_byte
+    call get_byte
     ld b, a                         ; pilot BIOS begin physical address MSB
 
-    call _get_byte
+    call get_byte
     ld l, a                         ; pilot BIOS size LSB
 
-    call _get_byte
+    call get_byte
     ld h, a                         ; pilot BIOS size MSB
 
-    call _get_byte
+    call get_byte
     altd
     ld a, a                         ; store received checksum in alt A
 
@@ -136,13 +137,13 @@ delay_loop:
     add a, b
     add a, l
     add a, h
-    call _send_byte                 ; send ack echoing the locally calculated checksum
+    call send_byte                  ; send ack echoing the locally calculated checksum
 
     exx
     ld b, a
     ex af, af'                      ; get received checksum
     cp b                            ; compare checksums
-    jp nz, _timeout                 ; if checksums do not match error out
+    jp nz, timeout                  ; if checksums do not match error out
 
     exx
     push hl                         ; save pilot BIOS size
@@ -173,7 +174,7 @@ delay_loop:
     ld ix, hl                       ; and in IX for the jump to the pilot BIOS
 
 wait_for_cc:
-    call _get_byte
+    call get_byte
     cp #0xcc                        ; initial pilot BIOS code (flag) byte?
     jr nz, wait_for_cc
     xor a
@@ -184,7 +185,7 @@ wait_for_cc:
                                     ; checksum value with the 0xcc just received
 
 load_pilot_loop:
-    call _get_byte
+    call get_byte
     ld (iy), a
 
 ; Use 8-bit Fletcher checksum algorithm. See RFC1145 for more info.
@@ -203,19 +204,15 @@ load_pilot_loop:
     jr nz, load_pilot_loop          ; repeat until size bytes are received
 
     ld a, c                         ; send LSB of pilot BIOS Fletcher checksum
-    call _send_byte
+    call send_byte
     ld a, b                         ; send MSB of pilot BIOS Fletcher checksum
-    call _send_byte
+    call send_byte
 
 ;   ioi ld (WDTTR), a               ; reenable the watchdog timer
 
     jp (ix)                         ; start running pilot bios
-__endasm;
-}
 
-void get_byte() __naked
-{
-__asm
+get_byte::
 pollrxbuf:
     ioi
     ld a, (SASR)                    ; check byte receive status
@@ -224,12 +221,8 @@ pollrxbuf:
     ioi
     ld a, (SADR)                    ; get byte
     ret
-__endasm;
-}
 
-void send_byte() __naked
-{
-__asm
+send_byte::
 ; Must not destroy register A!
     exx
 polltxbuf:
@@ -241,15 +234,9 @@ polltxbuf:
     ld (SADR), a                    ; send byte
     exx
     ret
-__endasm;
-}
 
-void timeout() __naked
-{
-__asm
+timeout::
     ld e, #0x55
-    jr _timeout
+    jr timeout
 
 coldloadend::
-__endasm;
-}
