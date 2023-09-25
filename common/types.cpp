@@ -26,8 +26,8 @@ std::string to_human(unsigned n)
 std::string to_hex(unsigned n)
 {
     std::ostringstream os;
-    os << std::hex << n;
-    return "0x" + std::move(os).str();
+    os << "0x" << std::hex << n;
+    return std::move(os).str();
 }
 
 std::string to_hex(const byte* data, size_t size)
