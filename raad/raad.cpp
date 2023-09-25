@@ -321,10 +321,8 @@ void send_program(asio::serial_port& serial, const payload& program, const param
 
     auto& flash = it->second;
     message("Flash ID: ", to_hex(probe.flash_id), " (", flash.name, ")\n");
-    message("  sec_size   = ", flash.param.sec_size,   '\n');
-    message("  num_sec    = ", flash.param.num_sec,    '\n');
-    message("  flash_size = ", flash.param.flash_size, '\n');
-    message("  write_mode = ", flash.param.write_mode, '\n');
+
+    message("div_19200 = ", static_cast<int>(probe.div_19200), '\n');
 
     do_("Sending flash data", [&]{ send_flash_data(serial, flash); });
     do_("Erasing flash", [&]{ erase_flash(serial, program.size()); });
