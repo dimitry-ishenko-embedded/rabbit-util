@@ -6,6 +6,9 @@ Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 13),
  cmake,
+ libasio-dev,
+ liburing-dev,
+ sdcc,
 Standards-Version: 4.6.2
 Homepage: https://github.com/dimitry-ishenko/rabbit-util
 Vcs-Browser: https://github.com/dimitry-ishenko/rabbit-util
