@@ -60,6 +60,13 @@ void set_bit(asio::serial_port& serial, int bit, bool s, asio::error_code& ec)
     if (ioctl(fd, s ? TIOCMBIS : TIOCMBIC, &bit)) ec.assign(errno, asio::system_category());
 }
 
+void set_bit(asio::serial_port& serial, int bit, bool s, const char* name)
+{
+    asio::error_code ec;
+    set_bit(serial, bit, s, ec);
+    asio::detail::throw_error(ec, name);
+}
+
 bool get_bit(asio::serial_port& serial, int bit, asio::error_code& ec)
 {
     int fd = serial.native_handle();
@@ -68,62 +75,34 @@ bool get_bit(asio::serial_port& serial, int bit, asio::error_code& ec)
     return (bits & bit);
 }
 
+bool get_bit(asio::serial_port& serial, int bit, const char* name)
+{
+    asio::error_code ec;
+    auto s = get_bit(serial, bit, ec);
+    asio::detail::throw_error(ec, name);
+    return s;
+}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool cts(asio::serial_port& serial)
-{
-    asio::error_code ec;
-    auto s = cts(serial, ec);
-    asio::detail::throw_error(ec, "cts");
-    return s;
-}
+bool cts(asio::serial_port& serial) { return get_bit(serial, TIOCM_CTS, "cts"); }
 bool cts(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_CTS, ec); }
 
-////////////////////////////////////////////////////////////////////////////////
-bool rts(asio::serial_port& serial)
-{
-    asio::error_code ec;
-    auto s = rts(serial, ec);
-    asio::detail::throw_error(ec, "rts");
-    return s;
-}
+bool rts(asio::serial_port& serial) { return get_bit(serial, TIOCM_RTS, "rts"); }
 bool rts(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_RTS, ec); }
 
-void rts(asio::serial_port& serial, bool s)
-{
-    asio::error_code ec;
-    rts(serial, s, ec);
-    asio::detail::throw_error(ec, "rts");
-}
+void rts(asio::serial_port& serial, bool s) { set_bit(serial, TIOCM_RTS, s, "rts"); }
 void rts(asio::serial_port& serial, bool s, asio::error_code& ec) { set_bit(serial, TIOCM_RTS, s, ec); }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool dsr(asio::serial_port& serial)
-{
-    asio::error_code ec;
-    auto s = dsr(serial, ec);
-    asio::detail::throw_error(ec, "dsr");
-    return s;
-}
+bool dsr(asio::serial_port& serial) { return get_bit(serial, TIOCM_DSR, "dsr"); }
 bool dsr(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_DSR, ec); }
 
-////////////////////////////////////////////////////////////////////////////////
-bool dtr(asio::serial_port& serial)
-{
-    asio::error_code ec;
-    auto s = dtr(serial, ec);
-    asio::detail::throw_error(ec, "dtr");
-    return s;
-}
+bool dtr(asio::serial_port& serial) { return get_bit(serial, TIOCM_DTR, "dtr"); }
 bool dtr(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_DTR, ec); }
 
-void dtr(asio::serial_port& serial, bool s)
-{
-    asio::error_code ec;
-    dtr(serial, s, ec);
-    asio::detail::throw_error(ec, "dtr");
-}
+void dtr(asio::serial_port& serial, bool s) { set_bit(serial, TIOCM_DTR, s, "dtr"); }
 void dtr(asio::serial_port& serial, bool s, asio::error_code& ec) { set_bit(serial, TIOCM_DTR, s, ec); }
 
 ////////////////////////////////////////////////////////////////////////////////
