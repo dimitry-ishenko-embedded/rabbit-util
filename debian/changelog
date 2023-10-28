@@ -1,3 +1,9 @@
+rabbit-util (0.2-2) unstable; urgency=medium
+
+  * debian: add missing dependencies
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sat, 28 Oct 2023 18:36:16 -0400
+
 rabbit-util (0.2-1) unstable; urgency=medium
 
   * bios: tweak copyright messages
