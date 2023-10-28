@@ -20,7 +20,15 @@ void send_data(asio::serial_port&, const payload&, size_t max_size = 0);
 void baud_rate(asio::serial_port&, unsigned);
 void baud_rate(asio::serial_port&, unsigned, asio::error_code&);
 
-////////////////////////////////////////////////////////////////////////////////
+bool cts(asio::serial_port&);
+bool cts(asio::serial_port&, asio::error_code&);
+
+bool rts(asio::serial_port&);
+bool rts(asio::serial_port&, asio::error_code&);
+
+void rts(asio::serial_port&, bool);
+void rts(asio::serial_port&, bool, asio::error_code&);
+
 bool dsr(asio::serial_port&);
 bool dsr(asio::serial_port&, asio::error_code&);
 

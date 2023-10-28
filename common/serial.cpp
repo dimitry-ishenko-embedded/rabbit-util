@@ -23,6 +23,7 @@ asio::serial_port open_serial(asio::io_context& ctx, const std::string& name)
     return serial;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void send_data(asio::serial_port& serial, const payload& data, size_t max_size)
 {
     if (max_size == 0) max_size = data.size();
@@ -38,6 +39,7 @@ void send_data(asio::serial_port& serial, const payload& data, size_t max_size)
     message("100%... ");
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void baud_rate(asio::serial_port& serial, unsigned rate)
 {
     serial.set_option(asio::serial_port::baud_rate{rate});
@@ -68,6 +70,35 @@ bool get_bit(asio::serial_port& serial, int bit, asio::error_code& ec)
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+bool cts(asio::serial_port& serial)
+{
+    asio::error_code ec;
+    auto s = cts(serial, ec);
+    asio::detail::throw_error(ec, "cts");
+    return s;
+}
+bool cts(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_CTS, ec); }
+
+////////////////////////////////////////////////////////////////////////////////
+bool rts(asio::serial_port& serial)
+{
+    asio::error_code ec;
+    auto s = rts(serial, ec);
+    asio::detail::throw_error(ec, "rts");
+    return s;
+}
+bool rts(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_RTS, ec); }
+
+void rts(asio::serial_port& serial, bool s)
+{
+    asio::error_code ec;
+    rts(serial, s, ec);
+    asio::detail::throw_error(ec, "rts");
+}
+void rts(asio::serial_port& serial, bool s, asio::error_code& ec) { set_bit(serial, TIOCM_RTS, s, ec); }
+
+////////////////////////////////////////////////////////////////////////////////
 bool dsr(asio::serial_port& serial)
 {
     asio::error_code ec;
@@ -77,6 +108,7 @@ bool dsr(asio::serial_port& serial)
 }
 bool dsr(asio::serial_port& serial, asio::error_code& ec) { return get_bit(serial, TIOCM_DSR, ec); }
 
+////////////////////////////////////////////////////////////////////////////////
 bool dtr(asio::serial_port& serial)
 {
     asio::error_code ec;
@@ -108,6 +140,7 @@ void drain(asio::serial_port& serial, asio::error_code& ec)
     if (tcdrain(fd)) ec.assign(errno, asio::system_category());
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void flush(asio::serial_port& serial, que que)
 {
     asio::error_code ec;
