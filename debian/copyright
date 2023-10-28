@@ -1,0 +1,17 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/dimitry-ishenko/rabbit-util
+Upstream-Name: rabbit-util
+Upstream-Contact: Dimitry Ishenko <dimitry (dot) ishenko (at) (gee) mail (dot) com>
+
+Files:
+ bios/*
+Copyright:
+ 2020 Digi International Inc.
+ 2023 Dimitry Ishenko <dimitry (dot) ishenko (at) (gee) mail (dot) com>
+License: MPL-2.0
+
+Files:
+ *
+Copyright:
+ 2023 Dimitry Ishenko <dimitry (dot) ishenko (at) (gee) mail (dot) com>
+License: GPL-3.0+
