@@ -34,18 +34,18 @@ constexpr byte start_pgm[] = "\x80\x24\x80";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void reset_target(asio::serial_port& serial)
+void reset_target(asio::serial_port& serial, const params& params)
 {
     do_("Resetting target", [&]{
-        dtr(serial, hi);
+        params.rts_cts ? rts(serial, hi) : dtr(serial, hi);
         sleep_for(250ms);
 
-        dtr(serial, lo);
+        params.rts_cts ? rts(serial, lo) : dtr(serial, lo);
         sleep_for(350ms);
     });
 }
 
-void detect_target(asio::serial_port& serial)
+void detect_target(asio::serial_port& serial, const params& params)
 {
     do_("Detecting presence", [&]{
         baud_rate(serial, 2400);
@@ -61,7 +61,7 @@ void detect_target(asio::serial_port& serial)
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.rts_cts ? cts(serial) : dsr(serial)) throw std::runtime_error{"Target not responding"};
 
         // tell Rabbit to set the /STATUS pin low
         doing("L");
@@ -70,7 +70,7 @@ void detect_target(asio::serial_port& serial)
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (!dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.rts_cts ? !cts(serial) : !dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
 }
 
@@ -94,7 +94,7 @@ void send_coldload(asio::serial_port& serial, const payload& data)
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (cts(serial)) throw std::runtime_error{"Target not responding"};
     });
 }
 

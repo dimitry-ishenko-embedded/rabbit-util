@@ -26,16 +26,17 @@ try
 
     pgm::args args
     {
-        { "-1", "--coldload", "path",       "Use custom initial loader."      },
-        { "-2", "--pilot", "path",          "Use custom secondary loader."    },
+        { "-1", "--coldload", "path",       "Use custom initial loader."            },
+        { "-2", "--pilot", "path",          "Use custom secondary loader."          },
         { "-p", "--port", "name", pgm::req, "Serial port to use for upload (required)." },
-        { "-r", "--run",                    "Launch program after upload."    },
-        { "-s", "--slow",                   "Limit max baud rate to 115200.\n"},
+        { "-r", "--run",                    "Launch program after upload."          },
+        { "-s", "--slow",                   "Limit max baud rate to 115200."        },
+        {       "--rts-cts",                "Use RTS/CTS pins intead of DTR/DSR.\n" },
 
-        { "-h", "--help",                   "Show this help screen and exit." },
-        { "-v", "--version",                "Show version and exit."          },
+        { "-h", "--help",                   "Show this help screen and exit."       },
+        { "-v", "--version",                "Show version and exit."                },
 
-        { "program.bin",                    "Path to program to be uploaded." },
+        { "program.bin",                    "Path to program to be uploaded."       },
     };
 
     std::exception_ptr ep;
@@ -65,11 +66,12 @@ try
         auto program  = read_file(ctx, args["program.bin"].value());
 
         params params;
+        params.rts_cts = !!args["--rts-cts"];
         params.run = !!args["-r"];
         params.slow = !!args["-s"];
 
-        reset_target(serial);
-        detect_target(serial);
+        reset_target(serial, params);
+        detect_target(serial, params);
 
         send_coldload(serial, coldload);
         send_pilot(serial, pilot);
