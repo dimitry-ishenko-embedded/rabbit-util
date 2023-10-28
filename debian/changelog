@@ -1,5 +1,81 @@
-rabbit-util (0.1-1) UNRELEASED; urgency=medium
+rabbit-util (0.1-1) unstable; urgency=medium
 
   * Initial release.
+  * Add copy of MPL 2.0
+  * Convert line endings
+  * coldload: remove debugging bits
+  * coldload: formatting
+  * coldload: re-write for SDCC
+  * makecold: re-write in C++
+  * Import pilot.bin from DCRabbit_9
+  * Add bits for CMake
+  * Import pgm-args as submodule
+  * BIOS_INSTALL_FULL_DIR will be needed later
+  * CMakeLists: support language servers
+  * Add initial bits for raad
+  * makecold: process entire file
+  * Ignore build dir
+  * coldload: reduce compiler warnings
+  * raad: add header
+  * Add bits for serial_port
+  * makecold: switch to asio
+  * raad: prep for serial port simplification
+  * raad: simplify serial
+  * raad: add initial rabbit bits
+  * raad: reset and detect target
+  * Centralize common functions
+  * makecold: use centralized functions
+  * Make pgm::args an interface library
+  * raad: use centralized functions
+  * raad: send initial loader
+  * makecold: formatting
+  * raad/serial: add drain function
+  * raad/serial: add flush function
+  * raad: drain on each write
+  * raad: small fix-ups
+  * common/file: char can be signed
+  * raad: send pilot bios
+  * Import bootstrapping.md from DCRabbit_9
+  * raad: corrections based on bootstrapping.md
+  * raad: tweak
+  * raad: make checksum functions more universal
+  * raad: tweak
+  * raad: make fletcher16() resumable
+  * raad: save myself debugging time in the future
+  * raad: use consistent names
+  * raad: use consistent names
+  * Add aliases for often-used types
+  * makecold: tweak
+  * raad: missed
+  * raad: tweak
+  * Move serial into common
+  * Move common functions/types into common
+  * Move more functions/types into common
+  * Extract useful bits from DCRabbit_9
+  * raad: rabbit -> raad
+  * Moar betterer use of CMake
+  * common: un-inline
+  * common: import board and CPU info from DCRabbit_9
+  * common: simplify board info, tweak CPU names
+  * common: split off flash params so they can be sent separately
+  * common: needed for const ref
+  * raad: implement several bits
+  * common: remove redundant comments
+  * raad: no need to retry
+  * common: tweak
+  * raad: implement flash erasure and program writing
+  * types: fix and rename fletcher16
+  * raad: add long options
+  * common: add "start in" values
+  * raad: implement program launch after upload
+  * raad: clarify and sort
+  * common: bump max baudrate to 460800
+  * raad: add option for slower baudrate
+  * raad: install
+  * coldload: convert to pure assembly
+  * types: tweak to_hex()
+  * raad: tweak messages
+  * Add basic README with license
+  * Add Debian packaging
 
- -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Mon, 23 Oct 2023 23:04:07 -0400
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sat, 28 Oct 2023 16:55:12 -0400
