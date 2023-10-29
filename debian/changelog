@@ -1,3 +1,11 @@
+rabbit-util (0.3-1) unstable; urgency=medium
+
+  * file: don't use asio::stream_file
+  * raad: split --rts-cts into --rts and --cts
+  * version 0.3
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Sun, 29 Oct 2023 11:33:45 -0400
+
 rabbit-util (0.2-2) unstable; urgency=medium
 
   * debian: add missing dependencies
