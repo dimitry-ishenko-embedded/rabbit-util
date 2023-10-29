@@ -13,10 +13,11 @@
 
 struct params
 {
-    bool rts_cts = false;
     bool run = false;
     bool run_in_ram = false;
     bool slow = false;
+    bool use_cts = false;
+    bool use_rts = false;
 };
 
 void reset_target(asio::serial_port&, const params&);

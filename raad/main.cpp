@@ -31,7 +31,8 @@ try
         { "-p", "--port", "name", pgm::req, "Serial port to use for upload (required)." },
         { "-r", "--run",                    "Launch program after upload."          },
         { "-s", "--slow",                   "Limit max baud rate to 115200."        },
-        {       "--rts-cts",                "Use RTS/CTS pins intead of DTR/DSR.\n" },
+        {       "--cts",                    "Use CTS to control the /RESET pin."    },
+        {       "--rts",                    "Use RTS to read the STATUS pin.\n"     },
 
         { "-h", "--help",                   "Show this help screen and exit."       },
         { "-v", "--version",                "Show version and exit."                },
@@ -66,9 +67,10 @@ try
         auto program  = read_file(ctx, args["program.bin"].value());
 
         params params;
-        params.rts_cts = !!args["--rts-cts"];
         params.run = !!args["-r"];
         params.slow = !!args["-s"];
+        params.use_cts = !!args["--cts"];
+        params.use_rts = !!args["--rts"];
 
         reset_target(serial, params);
         detect_target(serial, params);
