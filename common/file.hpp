@@ -11,9 +11,26 @@
 #include "types.hpp"
 #include <asio.hpp>
 
-using flags = asio::stream_file::flags;
+enum class flags
+{
+    create      = O_CREAT,
+    read_only   = O_RDONLY,
+    read_write  = O_RDWR,
+    truncate    = O_TRUNC,
+    write_only  = O_WRONLY,
+};
 
-asio::stream_file open_file(asio::io_context&, const std::string& path, flags);
+constexpr inline flags operator|(flags l, flags r) { return static_cast<flags>(static_cast<int>(l) | static_cast<int>(r)); }
+
+struct stream_file : asio::posix::stream_descriptor
+{
+    stream_file(asio::io_context& ctx) : asio::posix::stream_descriptor{ctx} { }
+
+    void open(const std::string& path, flags);
+    size_t size() const;
+};
+
+stream_file open_file(asio::io_context&, const std::string& path, flags);
 payload read_file(asio::io_context&, const std::string& path, size_t max_size = 0);
 
 ////////////////////////////////////////////////////////////////////////////////
