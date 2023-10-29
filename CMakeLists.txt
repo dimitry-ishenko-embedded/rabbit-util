@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(rabbit-util VERSION 0.2)
+project(rabbit-util VERSION 0.3)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
