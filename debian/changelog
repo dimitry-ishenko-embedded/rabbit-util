@@ -1,3 +1,10 @@
+rabbit-util (0.3.1-1) unstable; urgency=medium
+
+  * raad: fix CTS usage
+  * version 0.3.1
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Tue, 31 Oct 2023 23:52:45 -0400
+
 rabbit-util (0.3-1) unstable; urgency=medium
 
   * file: don't use asio::stream_file
