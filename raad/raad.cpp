@@ -75,7 +75,7 @@ void detect_target(asio::serial_port& serial, const params& params)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void send_coldload(asio::serial_port& serial, const payload& data)
+void send_coldload(asio::serial_port& serial, const payload& data, const params& params)
 {
     do_("Sending initial loader", [&]{
         baud_rate(serial, 2400);
@@ -94,7 +94,7 @@ void send_coldload(asio::serial_port& serial, const payload& data)
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (cts(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.use_cts ? cts(serial) : dsr(serial)) throw std::runtime_error{"Target not responding"};
     });
 }
 

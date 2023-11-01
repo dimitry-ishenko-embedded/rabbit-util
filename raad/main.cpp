@@ -75,7 +75,7 @@ try
         reset_target(serial, params);
         detect_target(serial, params);
 
-        send_coldload(serial, coldload);
+        send_coldload(serial, coldload, params);
         send_pilot(serial, pilot);
         send_program(serial, program, params);
     }
