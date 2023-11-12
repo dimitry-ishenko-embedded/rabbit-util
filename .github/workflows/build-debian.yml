@@ -1,0 +1,21 @@
+on:
+  push:
+    tags: debian/*
+
+jobs:
+  build-debian-unstable:
+    runs-on: ubuntu-latest
+    container: debian:unstable
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: apt-get -qq update && apt-get -qq upgrade && apt-get -qq install devscripts
+      - run: apt-get -qq build-dep .
+      - run: dpkg-buildpackage --build=binary --no-sign
+
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: ../*.deb
+          overwrite: true
