@@ -1,6 +1,7 @@
 on:
-  push:
-    tags: debian/*
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   build-ubuntu-source:
@@ -17,12 +18,11 @@ jobs:
           KEY: ${{ secrets.UBUNTU_SIGNING_KEY }}
         run: echo -n "$KEY" | base64 --decode | gpg --import
 
-      - run: sudo apt-get -qq update && sudo apt-get -qq upgrade && sudo apt-get -qq install devscripts dput-ng
-      - run: sudo apt-get -qq build-dep .
+      - run: sudo apt-get -qq update && sudo apt-get -qq upgrade && sudo apt-get -qq install build-essential dput-ng
 
       - run: sed -re "1 s/\(([^)]+)\) ([^;]+)/\(\1~${{ matrix.distro }}\) ${{ matrix.distro }}/" -i debian/changelog
       - env:
           KEY_ID: ${{ secrets.UBUNTU_SIGNING_KEY_ID }}
-        run: dpkg-buildpackage --build=source --sign-key=$KEY_ID
+        run: dpkg-buildpackage --build=source --sign-key=$KEY_ID --no-check-builddeps
 
       - run: dput ${{ matrix.ppa_url }} ../*.changes

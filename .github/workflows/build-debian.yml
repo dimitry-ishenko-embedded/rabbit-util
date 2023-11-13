@@ -1,6 +1,7 @@
 on:
-  push:
-    tags: debian/*
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   build-debian-unstable:
@@ -10,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: apt-get -qq update && apt-get -qq upgrade && apt-get -qq install devscripts
+      - run: apt-get -qq update && apt-get -qq upgrade && apt-get -qq install build-essential
       - run: apt-get -qq build-dep .
       - run: dpkg-buildpackage --build=binary --no-sign
 
