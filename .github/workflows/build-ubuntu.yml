@@ -18,7 +18,7 @@ jobs:
           KEY: ${{ secrets.UBUNTU_SIGNING_KEY }}
         run: echo -n "$KEY" | base64 --decode | gpg --import
 
-      - run: sudo apt-get -qq update && sudo apt-get -qq upgrade && sudo apt-get -qq install build-essential dput-ng
+      - run: sudo apt-get -qq update && sudo apt-get -qq upgrade && sudo apt-get -qq install build-essential debhelper dput-ng
 
       - run: sed -re "1 s/\(([^)]+)\) ([^;]+)/\(\1~${{ matrix.distro }}\) ${{ matrix.distro }}/" -i debian/changelog
       - env:
