@@ -7,7 +7,6 @@ Build-Depends:
  debhelper-compat (= 12),
  cmake,
  libasio-dev,
- liburing-dev,
  sdcc,
 Standards-Version: 4.6.2
 Homepage: https://github.com/dimitry-ishenko/rabbit-util
