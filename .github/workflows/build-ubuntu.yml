@@ -14,15 +14,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - env:
           KEY: ${{ secrets.UBUNTU_SIGNING_KEY }}
-        run: echo -n "$KEY" | base64 --decode | gpg --import
-
-      - run: sudo apt-get -qq update && sudo apt-get -qq upgrade && sudo apt-get -qq install build-essential debhelper dput-ng
-
-      - run: sed -re "1 s/\(([^)]+)\) ([^;]+)/\(\1~${{ matrix.distro }}\) ${{ matrix.distro }}/" -i debian/changelog
-      - env:
           KEY_ID: ${{ secrets.UBUNTU_SIGNING_KEY_ID }}
-        run: dpkg-buildpackage --build=source --sign-key=$KEY_ID --no-check-builddeps
+        run: |
+          echo -n "$KEY" | base64 --decode | gpg --import
 
-      - run: dput ${{ matrix.ppa_url }} ../*.changes
+          if grep -q quilt debian/source/format; then
+              p=$(sed -nre "1 s/(.+) \((.+:)?(([^-]+)|(.+)-[^-]+)\).*/\1 \4\5/p" debian/changelog)
+              git archive --output=../${p/ /_}.orig.tar.gz --prefix=${p/ /-}/ HEAD :^debian
+          fi
+          sed -re "1 s/\(([^)]+)\) ([^;]+)/\(\1~${{ matrix.distro }}\) ${{ matrix.distro }}/" -i debian/changelog
+
+          sudo apt-get -qq update
+          sudo apt-get -qq upgrade
+          sudo apt-get -qq install build-essential debhelper dput-ng
+
+          dpkg-buildpackage --build=source --sign-key=$KEY_ID --no-check-builddeps --no-pre-clean -sa
+          dput ${{ matrix.ppa_url }} ../*.changes
