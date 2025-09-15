@@ -1,21 +1,27 @@
+name: Build Debian packages
+
 on:
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
-  build-debian-unstable:
+  build-debian-stable:
     runs-on: ubuntu-latest
-    container: debian:unstable
+    container: debian:stable
 
     steps:
+      - run: |
+          apt-get -y update
+          apt-get -y upgrade
+          apt-get -y install build-essential git
+
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - run: |
-          apt-get -qq update
-          apt-get -qq upgrade
-          apt-get -qq install build-essential
-          apt-get -qq build-dep .
+          apt-get -y build-dep .
           dpkg-buildpackage --build=binary --no-sign
 
       - uses: svenstaro/upload-release-action@v2
