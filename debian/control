@@ -9,9 +9,9 @@ Build-Depends:
  libasio-dev,
  sdcc,
 Standards-Version: 4.6.2
-Homepage: https://github.com/dimitry-ishenko/rabbit-util
-Vcs-Browser: https://github.com/dimitry-ishenko/rabbit-util
-Vcs-Git: https://github.com/dimitry-ishenko/rabbit-util.git
+Homepage: https://github.com/dimitry-ishenko-embedded/rabbit-util
+Vcs-Browser: https://github.com/dimitry-ishenko-embedded/rabbit-util
+Vcs-Git: https://github.com/dimitry-ishenko-embedded/rabbit-util.git
 
 Package: rabbit-util
 Architecture: any
