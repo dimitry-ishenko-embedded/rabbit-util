@@ -20,7 +20,7 @@ using namespace std::this_thread;
 ////////////////////////////////////////////////////////////////////////////////
 using byte = std::uint8_t;
 using word = std::uint16_t;
-using dword = std::uint32_t;
+using dword= std::uint32_t;
 using std::size_t;
 
 using payload = std::vector<byte>;

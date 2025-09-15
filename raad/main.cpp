@@ -60,7 +60,7 @@ try
     else
     {
         asio::io_context ctx;
-        auto serial = open_serial(ctx, args["-p"].value());
+        auto port = open_serial(ctx, args["-p"].value());
 
         auto coldload = read_file(ctx, args["-1"].value_or(def_coldload));
         auto pilot    = read_file(ctx, args["-2"].value_or(def_pilot));
@@ -72,12 +72,12 @@ try
         params.use_cts = !!args["--cts"];
         params.use_rts = !!args["--rts"];
 
-        reset_target(serial, params);
-        detect_target(serial, params);
+        reset_target(port, params);
+        detect_target(port, params);
 
-        send_coldload(serial, coldload, params);
-        send_pilot(serial, pilot);
-        send_program(serial, program, params);
+        send_coldload(port, coldload, params);
+        send_pilot(port, pilot);
+        send_program(port, program, params);
     }
 
     return 0;

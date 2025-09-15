@@ -34,76 +34,84 @@ constexpr byte start_pgm[] = "\x80\x24\x80";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void reset_target(asio::serial_port& serial, const params& params)
+void reset_target(asio::serial_port& port, const params& params)
 {
     do_("Resetting target", [&]{
-        params.use_rts ? rts(serial, hi) : dtr(serial, hi);
-        sleep_for(250ms);
+        if (params.use_rts) {
+            rts(port, hi);
+            sleep_for(250ms);
 
-        params.use_rts ? rts(serial, lo) : dtr(serial, lo);
-        sleep_for(350ms);
+            rts(port, lo);
+            sleep_for(350ms);
+        } else {
+            dtr(port, hi);
+            sleep_for(250ms);
+
+            dtr(port, lo);
+            sleep_for(350ms);
+        }
     });
 }
 
-void detect_target(asio::serial_port& serial, const params& params)
+void detect_target(asio::serial_port& port, const params& params)
 {
     do_("Detecting presence", [&]{
-        baud_rate(serial, 2400);
+        baud_rate(port, 2400);
 
         // disable watchdog
         doing("W");
-        asio::write(serial, asio::buffer(disable_wd, size(disable_wd)));
+        asio::write(port, asio::buffer(disable_wd, size(disable_wd)));
 
         // tell Rabbit to set the /STATUS pin high
         doing("H");
-        asio::write(serial, asio::buffer(status_hi, size(status_hi)));
-        drain(serial);
+        asio::write(port, asio::buffer(status_hi, size(status_hi)));
+        drain(port);
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (params.use_cts ? cts(serial) : dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.use_cts ? cts(port) : dsr(port)) throw std::runtime_error{"Target not responding"};
 
         // tell Rabbit to set the /STATUS pin low
         doing("L");
-        asio::write(serial, asio::buffer(status_lo, size(status_lo)));
-        drain(serial);
+        asio::write(port, asio::buffer(status_lo, size(status_lo)));
+        drain(port);
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (params.use_cts ? !cts(serial) : !dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.use_cts ? !cts(port) : !dsr(port)) throw std::runtime_error{"Target not responding"};
     });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void send_coldload(asio::serial_port& serial, const payload& data, const params& params)
+void send_coldload(asio::serial_port& port, const payload& data, const params& params)
 {
     do_("Sending initial loader", [&]{
-        baud_rate(serial, 2400);
+        baud_rate(port, 2400);
 
         // send loader without the final triplet (see bootstrapping.md)
-        send_data(serial, data, data.size() - 3);
+        send_data(port, data, data.size() - 3);
 
         // tell Rabbit to set the /STATUS pin high
         doing("H");
-        asio::write(serial, asio::buffer(status_hi, size(status_hi)));
+        asio::write(port, asio::buffer(status_hi, size(status_hi)));
 
         // send the final triplet
         doing("F");
-        asio::write(serial, asio::buffer(start_pgm, size(start_pgm)));
-        drain(serial);
+        asio::write(port, asio::buffer(start_pgm, size(start_pgm)));
+        drain(port);
 
         // check the /STATUS pin (inverted)
         sleep_for(100ms);
-        if (params.use_cts ? cts(serial) : dsr(serial)) throw std::runtime_error{"Target not responding"};
+        if (params.use_cts ? cts(port) : dsr(port)) throw std::runtime_error{"Target not responding"};
     });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void send_pilot(asio::serial_port& serial, const payload& data)
+void send_pilot(asio::serial_port& port, const payload& data)
 {
     do_("Sending secondary loader", [&]{
-        baud_rate(serial, 57600);
-        flush(serial, que_in);
+        baud_rate(port, 57600);
+        flush(port, que_in);
 
         pilot_head head;
         head.address = 0x4000;
@@ -111,22 +119,22 @@ void send_pilot(asio::serial_port& serial, const payload& data)
         head.check = checksum(addressof(head), sizeof(head) - sizeof(head.check));
 
         doing("H");
-        asio::write(serial, asio::buffer(addressof(head), sizeof(head)));
-        drain(serial);
+        asio::write(port, asio::buffer(addressof(head), sizeof(head)));
+        drain(port);
 
         doing("C");
         byte check;
-        asio::read(serial, asio::buffer(addressof(check), sizeof(check)));
+        asio::read(port, asio::buffer(addressof(check), sizeof(check)));
         if (head.check != check) throw std::runtime_error{
             "Checksum error: local=" + to_hex(head.check) + " remote=" + to_hex(check)
         };
 
-        send_data(serial, data);
+        send_data(port, data);
         auto fsl = fletcher8(data.data(), data.size());
 
         doing("C");
         word fsr;
-        asio::read(serial, asio::buffer(addressof(fsr), sizeof(fsr)));
+        asio::read(port, asio::buffer(addressof(fsr), sizeof(fsr)));
         if (fsl != fsr) throw std::runtime_error{
             "Checksum error: local=" + to_hex(fsl) + " remote=" + to_hex(fsr)
         };
@@ -151,7 +159,7 @@ void add_escaped(payload& packet, const byte* data, size_t size)
         else packet.push_back(*data);
 }
 
-void send_packet(asio::serial_port& serial, byte subtype, const byte* data, size_t size)
+void send_packet(asio::serial_port& port, byte subtype, const byte* data, size_t size)
 {
     packet_head head;
     head.version    = TC_VERSION;
@@ -169,22 +177,22 @@ void send_packet(asio::serial_port& serial, byte subtype, const byte* data, size
     add_escaped(packet, data, size);
     add_escaped(packet, addressof(check), sizeof(check));
 
-    asio::write(serial, asio::buffer(packet));
-    drain(serial);
+    asio::write(port, asio::buffer(packet));
+    drain(port);
 }
-void send_packet(asio::serial_port& serial, byte subtype) { send_packet(serial, subtype, nullptr, 0); }
+void send_packet(asio::serial_port& port, byte subtype) { send_packet(port, subtype, nullptr, 0); }
 
 ////////////////////////////////////////////////////////////////////////////////
-auto read_escaped(asio::serial_port& serial, size_t size)
+auto read_escaped(asio::serial_port& port, size_t size)
 {
     payload packet(size);
     for (auto data = packet.data(), end = data + size; data != end; ++data)
     {
         byte c;
-        asio::read(serial, asio::buffer(addressof(c), sizeof(c)));
+        asio::read(port, asio::buffer(addressof(c), sizeof(c)));
         if (c == TC_FRAMING_ESC)
         {
-            asio::read(serial, asio::buffer(addressof(c), sizeof(c)));
+            asio::read(port, asio::buffer(addressof(c), sizeof(c)));
             *data = c | 0x20;
         }
         else *data = c;
@@ -192,22 +200,22 @@ auto read_escaped(asio::serial_port& serial, size_t size)
     return packet;
 }
 
-auto recv_packet(asio::serial_port& serial, byte subtype)
+auto recv_packet(asio::serial_port& port, byte subtype)
 {
     for (;;)
     {
         byte c = 0;
-        asio::read(serial, asio::buffer(addressof(c), sizeof(c)));
+        asio::read(port, asio::buffer(addressof(c), sizeof(c)));
         if (c == TC_FRAMING_START)
         {
-            auto chunk = read_escaped(serial, sizeof(packet_head));
+            auto chunk = read_escaped(port, sizeof(packet_head));
             auto head = new (chunk.data()) packet_head;
             if (head->type == TC_TYPE_SYSTEM && (head->subtype & TC_SUBTYPE_MASK) == subtype)
             {
                 bool is_ack = head->subtype & TC_ACK;
-                auto payload = read_escaped(serial, head->data_size);
+                auto payload = read_escaped(port, head->data_size);
 
-                auto chunk = read_escaped(serial, sizeof(word));
+                auto chunk = read_escaped(port, sizeof(word));
                 auto fsr = new (chunk.data()) word;
 
                 auto fsl = fletcher8(addressof(*head), sizeof(*head));
@@ -225,15 +233,15 @@ auto recv_packet(asio::serial_port& serial, byte subtype)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-auto find_baud_rate(asio::serial_port& serial, const params& params)
+auto find_baud_rate(asio::serial_port& port, const params& params)
 {
     sleep_for(100ms);
     auto rate = params.slow ? (max_baud_rate / 4) : max_baud_rate;
     for (; rate >= min_baud_rate; rate /= 2)
     {
         doing(rate);
-        send_packet(serial, TC_SYSTEM_SETBAUDRATE, addressof(rate), sizeof(rate));
-        auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_SETBAUDRATE);
+        send_packet(port, TC_SYSTEM_SETBAUDRATE, addressof(rate), sizeof(rate));
+        auto [is_ack, payload] = recv_packet(port, TC_SYSTEM_SETBAUDRATE);
 
         if (is_ack) return rate;
 
@@ -242,11 +250,11 @@ auto find_baud_rate(asio::serial_port& serial, const params& params)
     throw std::runtime_error{"No suitable baud rate"};
 }
 
-auto recv_info(asio::serial_port& serial)
+auto recv_info(asio::serial_port& port)
 {
     sleep_for(100ms);
-    send_packet(serial, TC_SYSTEM_INFOPROBE);
-    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_INFOPROBE);
+    send_packet(port, TC_SYSTEM_INFOPROBE);
+    auto [is_ack, payload] = recv_packet(port, TC_SYSTEM_INFOPROBE);
 
     if (!is_ack) throw std::runtime_error{"Error getting info data"};
     if (payload.size() != sizeof(info_probe)) throw std::runtime_error{"Invalid info data"};
@@ -255,25 +263,25 @@ auto recv_info(asio::serial_port& serial)
     return *info;
 }
 
-void send_flash_data(asio::serial_port& serial, const flash_data& flash)
+void send_flash_data(asio::serial_port& port, const flash_data& flash)
 {
     sleep_for(100ms);
-    send_packet(serial, TC_SYSTEM_FLASHDATA, addressof(flash.param), sizeof(flash.param));
-    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_FLASHDATA);
+    send_packet(port, TC_SYSTEM_FLASHDATA, addressof(flash.param), sizeof(flash.param));
+    auto [is_ack, payload] = recv_packet(port, TC_SYSTEM_FLASHDATA);
 
     if (!is_ack) throw std::runtime_error{"Error setting flash parameters"};
 }
 
-void erase_flash(asio::serial_port& serial, dword program_size)
+void erase_flash(asio::serial_port& port, dword program_size)
 {
     sleep_for(100ms);
-    send_packet(serial, TC_SYSTEM_ERASEFLASH, addressof(program_size), sizeof(program_size));
-    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_ERASEFLASH);
+    send_packet(port, TC_SYSTEM_ERASEFLASH, addressof(program_size), sizeof(program_size));
+    auto [is_ack, payload] = recv_packet(port, TC_SYSTEM_ERASEFLASH);
 
     if (!is_ack) throw std::runtime_error{"Error erasing flash"};
 }
 
-void send_chunk(asio::serial_port& serial, dword offset, const byte* data, size_t size)
+void send_chunk(asio::serial_port& port, dword offset, const byte* data, size_t size)
 {
     write_data chunk;
     chunk.type = TC_SYSWRITE_PHYSICAL;
@@ -281,30 +289,30 @@ void send_chunk(asio::serial_port& serial, dword offset, const byte* data, size_
     chunk.address = 0x00080000 + offset;
     std::copy(data, data + size, chunk.data);
 
-    send_packet(serial, TC_SYSTEM_WRITE, addressof(chunk), sizeof(chunk) - sizeof(chunk.data) + size);
-    auto [is_ack, payload] = recv_packet(serial, TC_SYSTEM_WRITE);
+    send_packet(port, TC_SYSTEM_WRITE, addressof(chunk), sizeof(chunk) - sizeof(chunk.data) + size);
+    auto [is_ack, payload] = recv_packet(port, TC_SYSTEM_WRITE);
 
     if (!is_ack) throw std::runtime_error{"Error writing data chunk"};
 }
 
-void run_program(asio::serial_port& serial, bool run_in_ram)
+void run_program(asio::serial_port& port, bool run_in_ram)
 {
     sleep_for(100ms);
     byte run_in = run_in_ram ? TC_STARTBIOS_RAM : TC_STARTBIOS_FLASH;
 
-    send_packet(serial, TC_SYSTEM_STARTBIOS, addressof(run_in), sizeof(run_in));
+    send_packet(port, TC_SYSTEM_STARTBIOS, addressof(run_in), sizeof(run_in));
 }
 
 }
 
-void send_program(asio::serial_port& serial, const payload& program, const params& params)
+void send_program(asio::serial_port& port, const payload& program, const params& params)
 {
     unsigned rate;
-    do_("Negotiating baud rate", [&]{ rate = find_baud_rate(serial, params); });
-    do_("Switching to ", rate, [&]{ baud_rate(serial, rate); });
+    do_("Negotiating baud rate", [&]{ rate = find_baud_rate(port, params); });
+    do_("Switching to ", rate, [&]{ baud_rate(port, rate); });
 
     info_probe probe;
-    do_("Probing board info", [&]{ probe = recv_info(serial); });
+    do_("Probing board info", [&]{ probe = recv_info(port); });
 
     message("CPU   ID: ", to_hex(probe.cpu_id));
     if (auto it = cpu_info.find(probe.cpu_id); it != cpu_info.end())
@@ -324,8 +332,8 @@ void send_program(asio::serial_port& serial, const payload& program, const param
 
     message("div_19200 = ", static_cast<int>(probe.div_19200), '\n');
 
-    do_("Sending flash data", [&]{ send_flash_data(serial, flash); });
-    do_("Erasing flash", [&]{ erase_flash(serial, program.size()); });
+    do_("Sending flash data", [&]{ send_flash_data(port, flash); });
+    do_("Erasing flash", [&]{ erase_flash(port, program.size()); });
 
     do_("Sending program", [&]{
         sleep_for(100ms);
@@ -334,7 +342,7 @@ void send_program(asio::serial_port& serial, const payload& program, const param
         for (size_t offset = 0, size = program.size(); offset < size; offset += delta)
         {
             if (offset + delta > size) delta = size - offset;
-            send_chunk(serial, offset, program.data() + offset, delta);
+            send_chunk(port, offset, program.data() + offset, delta);
 
             auto pc = offset * 100 / size;
             message(pc, "%... ", std::string(5 + ((pc < 10) ? 1 : (pc < 100) ? 2 : 3), '\b'));
@@ -342,5 +350,5 @@ void send_program(asio::serial_port& serial, const payload& program, const param
         message("100%... ");
     });
 
-    if (params.run) do_("Launching program", [&](){ run_program(serial, params.run_in_ram); });
+    if (params.run) do_("Launching program", [&](){ run_program(port, params.run_in_ram); });
 }
