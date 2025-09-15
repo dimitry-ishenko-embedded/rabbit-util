@@ -1,4 +1,3 @@
-####################
 ## makecold
 add_executable(makecold EXCLUDE_FROM_ALL makecold.cpp)
 target_link_libraries(makecold common)

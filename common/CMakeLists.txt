@@ -1,4 +1,3 @@
-####################
 add_library(common OBJECT
     file.cpp file.hpp
     message.hpp
@@ -6,4 +5,4 @@ add_library(common OBJECT
     serial.cpp serial.hpp
     types.cpp types.hpp
 )
-target_include_directories(common INTERFACE .)
+target_include_directories(common PUBLIC .)
