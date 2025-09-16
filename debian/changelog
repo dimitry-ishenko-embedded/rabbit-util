@@ -1,3 +1,10 @@
+rabbit-util (0.3.4) unstable; urgency=medium
+
+  * version 0.3.4
+  * pgm: fix include path
+
+ -- Dimitry Ishenko <dimitry.ishenko@gmail.com>  Tue, 16 Sep 2025 15:33:28 -0400
+
 rabbit-util (0.3.3) unstable; urgency=medium
 
   * version 0.3.3
